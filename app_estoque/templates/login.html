@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Estoque Manutenção</title>
+    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div class="text-center max-w-md w-full">
+        <header class="mb-8">
+            <img src="{% static 'images/icone.jpg' %}" alt="Ícone de Caixa" class="mx-auto h-16 w-auto mb-4">
+            <h1 class="text-4xl font-bold text-gray-800">Estoque Manutenção</h1>
+            <p class="text-gray-500 mt-2">Sistema de controle de estoque para o setor de manutenção</p>
+        </header>
+
+        <main class="bg-white p-8 rounded-xl shadow-md">
+            <h2 class="text-2xl font-semibold text-gray-700">Acesso ao Sistema</h2>
+            <p class="text-gray-500 text-sm mt-2 mb-6">Escolha um método de autenticação</p>
+
+            <div class="bg-gray-100 p-1 rounded-lg flex mb-6">
+                <button class="flex-1 py-2 text-sm font-semibold bg-white text-blue-600 rounded-md shadow-sm">Tradicional</button>
+                <button class="flex-1 py-2 text-sm text-gray-500">FaceID</button>
+                <button class="flex-1 py-2 text-sm text-gray-500">RFID</button>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label for="id_username" class="block text-sm font-medium text-gray-600 mb-1">Registro de empregado (RE)</label>
+                        <input type="text" name="username" id="id_username" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Digite seu RE">
+                    </div>
+                    <div>
+                        <label for="id_password" class="block text-sm font-medium text-gray-600 mb-1">Senha</label>
+                        <input type="password" name="password" id="id_password" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Digite sua senha">
+                    </div>
+                </div>
+                
+                {% if form.errors %}
+                <p class="text-red-500 text-sm mt-4">Seu RE ou senha estão incorretos. Tente novamente.</p>
+                {% endif %}
+
+                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">Entrar</button>
+                
+                <div class="text-center mt-4">
+                    <a href="#" class="text-sm text-blue-600 hover:underline">Não lembra sua senha?</a>
+                </div>
+            </form>
+        </main>
+        <footer class="mt-6 text-center text-gray-500 text-sm">
+            <p>Não tem uma conta? <a href="{% url 'estoque:cadastro' %}" class="text-blue-600 font-semibold hover:underline">Cadastre-se</a></p>
+        </footer>
+    </div>
+
+</body>
+</html>
