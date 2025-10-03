@@ -62,6 +62,35 @@ def estoque_view(request):
     return render(request, 'estoque.html', context)
 
 @login_required
+def carrinho_view(request):
+    carrinho_session = request.session.get('carrinho', {})
+    
+    itens_no_carrinho = []
+    valor_total_carrinho = 0
+    
+    # Busca os objetos 'Item' completos com base nos IDs do carrinho
+    item_ids = carrinho_session.keys()
+    itens_db = Item.objects.filter(id__in=item_ids)
+    
+    for item in itens_db:
+        item_id_str = str(item.id)
+        quantidade = carrinho_session[item_id_str]['quantidade']
+        valor_item_total = item.valor * quantidade
+        
+        itens_no_carrinho.append({
+            'item': item,
+            'quantidade': quantidade,
+            'valor_total': valor_item_total,
+        })
+        valor_total_carrinho += valor_item_total
+
+    context = {
+        'itens_no_carrinho': itens_no_carrinho,
+        'valor_total_carrinho': valor_total_carrinho,
+    }
+    return render(request, 'carrinho.html', context)
+
+@login_required
 def limpar_carrinho(request):
     if 'carrinho' in request.session:
         del request.session['carrinho']

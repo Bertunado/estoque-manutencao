@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const retiradaContainer = document.getElementById('carrinho-container');
     if (retiradaContainer) {
         
+        const popup = document.getElementById('item-adicionado-popup');
+        const fecharPopupBtn = document.getElementById('fechar-popup-btn');
         const carrinhoVazioMensagem = document.getElementById('carrinho-vazio');
         const contadorCarrinho = document.getElementById('contador-carrinho');
         const carrinhoTotalEl = document.getElementById('carrinho-total');
@@ -122,6 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
             retiradaContainer.prepend(novoItem);
             atualizarContador();
             atualizarTotalCarrinho();
+
+            if (popup) {
+                popup.classList.remove('hidden');
+                popup.classList.add('flex');
+                }
+            
+            if (fecharPopupBtn) {
+                fecharPopupBtn.addEventListener('click', () => {
+                popup.classList.add('hidden');
+                popup.classList.remove('flex');
+                });
+            
+            } 
         }
 
         function atualizarTotalCarrinho() {

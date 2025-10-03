@@ -1,117 +1,106 @@
 {% extends "base.html" %} 
 
 {% block content %}
-<div class="flex-1 lg:flex lg:overflow-hidden">
-<main class="flex-1 flex flex-col lg:overflow-y-auto">
-    
-    <!-- Container para o cabeçalho e busca (não rolável) -->
-     <div class="p-4 lg:p-8">
-        <h1 class="text-3xl font-bold text-gray-800">Retiradar de itens :></h1>
-        <p class="text-gray-500 mt-1 mb-8">Visualize os itens disponíveis no estoque :> </p>
+<div class="flex-1 lg:flex lg:overflow-hidden relative">
 
-        <form method="GET" action="{% url 'estoque:retirada' %}">
-            <div class="relative mb-6">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
-                </span>
-                <input 
-                    type="text" 
-                    name="q" 
-                    placeholder="Busque por nome ou código..." 
-                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-600 focus:border-blue-600"
-                    value="{{ request.GET.q }}"
-                >
+    <main class="flex-1 flex flex-col lg:overflow-y-auto">
+        
+        <div class="p-4 lg:p-8 flex-shrink-0">
+            <h1 class="text-3xl font-bold text-gray-800">Retirada de itens</h1>
+            <p class="text-gray-500 mt-1 mb-8">Visualize os itens disponíveis no estoque</p>
+
+            <form method="GET" action="{% url 'estoque:retirada' %}">
+                <div class="relative mb-6">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                    </span>
+                    <input type="text" name="q" placeholder="Busque por nome ou código..." class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-600 focus:border-blue-600" value="{{ request.GET.q }}">
+                </div>
+            </form>
+            
+            {% if request.GET.q %}
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">
+                Resultados da busca por: <span class="text-blue-600">"{{ request.GET.q }}"</span>
+            </h2>
+            {% endif %}
+        </div>
+        
+        <div class="flex-grow px-4 lg:px-8 pb-8 overflow-y-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {% for item in page_obj %}
+                <div class="bg-white border item-card border-gray-200 rounded-lg p-4 flex flex-col justify-between transition hover:shadow-md">
+                    <div class="flex-shrink-0 w-full mb-4">
+                        <img src="{{ item.imagem.url }}" alt="Imagem de {{ item.nome }}" class="w-full h-48 object-cover rounded-lg">
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="font-bold text-lg text-gray-800" data-name>{{ item.nome }}</h3>
+                        <p class="text-sm text-gray-500 mt-1" data-code>Código: {{ item.codigo }}</p>
+                        <p class="text-sm text-gray-500" data-valor="{{ item.valor }}">Valor: R$ {{ item.valor|floatformat:2 }}</p>
+                        <p class="text-sm text-gray-500" data-category>Categoria: {{ item.categoria }}</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <p class="text-gray-700">Disponível: 
+                            <span class="font-bold text-lg" data-disponivel>{{ item.disponivel }}</span>
+                        </p>
+                        <button class="btn-adicionar bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600" data-item-id="{{ item.id }}">
+                            Retirar Item
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 col-span-full text-center py-10">Nenhum item disponível encontrado.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex-shrink-0 p-4 lg:p-8 pt-0">
+            <div class="flex justify-center items-center border-t pt-6">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Anterior</a>
+                {% endif %}
+                <span class="mx-4 text-sm text-gray-700">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">Próxima</a>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <aside class="hidden lg:flex w-full lg:w-96 bg-white p-6 border-t lg:border-t-0 lg:border-l flex-col flex-shrink-0">
+        <form action="{% url 'estoque:confirmar_retirada' %}" method="post">
+            {% csrf_token %}
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Itens selecionados</h2>
+                <span id="contador-carrinho" class="bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
+            </div>
+            
+            <div id="carrinho-container" class="flex-1 overflow-y-auto" data-update-url="{% url 'estoque:atualizar_quantidade' %}">
+                <div id="carrinho-vazio" class="text-center text-gray-500 h-full flex flex-col items-center justify-center">
+                    <svg class="h-16 w-16 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.839a.75.75 0 0 0-.543-.922l-13.5-3.375a.75.75 0 0 0-.915.642L4.5 12.25l-2.092.835A.75.75 0 0 0 2.25 14.25Z" /></svg>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-800">Carrinho vazio</h3>
+                    <p class="mt-1 text-sm">Adicione itens para realizar a retirada.</p>
+                </div>
+            </div>
+            
+            <div class="mt-6 border-t pt-6">
+                <div class="flex justify-between items-center text-lg font-bold text-gray-800 mb-4">
+                    <span>Total:</span>
+                    <span id="carrinho-total">R$ 0,00</span>
+                </div>
+                <label for="observacao" class="block text-sm font-medium text-gray-700 mb-2">Observação (opcional)</label>
+                <textarea id="observacao" name="observacao" class="w-full p-2 border border-gray-300 rounded-lg h-24 focus:ring-brand-blue-600 focus:border-brand-blue-600"></textarea>
+                <button type="submit" class="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors">Confirmar retirada</button>
+                <button type="button" id="limpar-carrinho-btn" class="w-full mt-2 bg-white text-gray-700 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 font-semibold" data-limpar-url="{% url 'estoque:limpar_carrinho' %}">Limpar Seleção</button>
             </div>
         </form>
-        
-        {% if request.GET.q %}
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">
-            Resultados da busca por: <span class="text-blue-600">"{{ request.GET.q }}"</span>
-        </h2>
-        {% endif %}
-    </div>
-    
-    <div class="flex-grow px-4 lg:px-8 pb-8 overflow-y-auto">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {% for item in page_obj %}
-            <div class="bg-white border item-card border-gray-200 rounded-lg p-4 flex flex-col justify-between transition hover:shadow-md">
-                <div class="flex-shrink-0 w-full mb-4">
-                    <img src="{{ item.imagem.url }}" alt="Imagem de {{ item.nome }}" class="w-full h-48 object-cover rounded-lg">
-                </div>
-                <div class="mb-4">
-                    <h3 class="font-bold text-lg text-gray-800" data-name>{{ item.nome }}</h3>
-                    <p class="text-sm text-gray-500 mt-1" data-code>Código: {{ item.codigo }}</p>
-                    <p class="text-sm text-gray-500" data-valor="{{ item.valor }}">Valor: R$ {{ item.valor|floatformat:2 }}</p>
-                    <p class="text-sm text-gray-500" data-category>Categoria: {{ item.categoria }}</p>
-                </div>
-                <div class="flex justify-between items-center">
-                    <p class="text-gray-700">Disponível: 
-                        <span class="font-bold text-lg" data-disponivel>{{ item.disponivel }}</span>
-                    </p>
-                    <button class="btn-adicionar bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600" data-item-id="{{ item.id }}">
-                        Retirar Item
-                    </button>
-                </div>
-            </div>
-            {% empty %}
-                <p class="text-gray-500 col-span-full text-center py-10">Nenhum item disponível encontrado.</p>
-            {% endfor %} 
-        </div>
+    </aside>
+
+    <div id="item-adicionado-popup" class="hidden fixed bottom-4 right-4 bg-gray-800 text-white p-4 rounded-lg shadow-lg items-center gap-4">
+        <span>Item adicionado ao carrinho!</span>
+        <a href="{% url 'estoque:carrinho' %}" class="bg-blue-600 px-3 py-1 rounded-md text-sm font-semibold">Ir para o Carrinho</a>
+        <button id="fechar-popup-btn" class="text-gray-400 hover:text-white">&times;</button>
     </div>
 
-    <!-- Container da Paginação (NÃO rola) -->
-    <div class="flex-shrink-0 p-4 lg:p-8 pt-0">
-        <div class="flex justify-center items-center border-t pt-6">
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">
-                    Anterior
-                </a>
-            {% endif %}
-
-            <span class="mx-4 text-sm text-gray-700">
-                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100">
-                    Próxima
-                </a>
-            {% endif %}
-        </div>
-    </div>
-</main>
-
-<aside class="w-full lg:w-96 bg-white p-6 border-t lg:border-t-0 lg:border-l flex flex-col flex-shrink-0">
-    <form action="{% url 'estoque:confirmar_retirada' %}" method="post">
-        {% csrf_token %}
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-gray-800">Itens selecionados</h2>
-            <span id="contador-carrinho" class="bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">0</span>
-        </div>
-        
-        <div id="carrinho-container" class="flex-1 overflow-y-auto" data-update-url="{% url 'estoque:atualizar_quantidade' %}">
-            <div id="carrinho-vazio" class="text-center text-gray-500 h-full flex flex-col items-center justify-center">
-                <svg class="h-16 w-16 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.839a.75.75 0 0 0-.543-.922l-13.5-3.375a.75.75 0 0 0-.915.642L4.5 12.25l-2.092.835A.75.75 0 0 0 2.25 14.25Z" /></svg>
-                <h3 class="mt-4 text-lg font-semibold text-gray-800">Carrinho vazio</h3>
-                <p class="mt-1 text-sm">Adicione itens para realizar a retirada.</p>
-            </div>
-        </div>
-        
-        <div class="mt-6 border-t pt-6">
-
-            <div class="flex justify-between items-center text-lg font-bold text-gray-800 mb-4">
-                <span>Total:</span>
-                <span id="carrinho-total">R$ 0,00</span>
-            </div>
-
-            <label for="observacao" class="block text-sm font-medium text-gray-700 mb-2">Observação (opcional)</label>
-            <textarea id="observacao" name="observacao" class="w-full p-2 border border-gray-300 rounded-lg h-24 focus:ring-brand-blue-600 focus:border-brand-blue-600"></textarea>
-            
-            <button type="submit" class="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors">Confirmar retirada</button>
-            <button type="button" id="limpar-carrinho-btn" class="w-full mt-2 bg-white text-gray-700 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 font-semibold" data-limpar-url="{% url 'estoque:limpar_carrinho' %}">Limpar Seleção</button>
-        </div>
-    </form>
-</aside>
 </div>
 
 <template id="carrinho-item-template">
