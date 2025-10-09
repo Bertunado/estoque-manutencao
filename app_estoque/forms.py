@@ -18,7 +18,7 @@ class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
         # Escolha os campos do modelo 'Item' que você quer no formulário
-        fields = ['nome', 'codigo', 'categoria', 'disponivel', 'capacidade_maxima', 'valor', 'imagem']
+        fields = ['nome', 'codigo', 'categoria', 'disponivel', 'capacidade_maxima', 'valor', 'localizacao', 'imagem']
         
         # Opcional: Adiciona classes CSS para estilizar os campos
         widgets = {
@@ -28,6 +28,7 @@ class ItemForm(forms.ModelForm):
             'disponivel': forms.NumberInput(attrs={'class': 'w-full p-2 border border-gray-300 rounded-lg'}),
             'capacidade_maxima': forms.NumberInput(attrs={'class': 'w-full p-2 border border-gray-300 rounded-lg'}),
             'valor': forms.NumberInput(attrs={'class': 'w-full p-2 border border-gray-300 rounded-lg', 'step': '0.01'}),
+            'localizacao': forms.TextInput(attrs={'class': 'w-full p-2 border border-gray-300 rounded-lg'}),
             'imagem': forms.ClearableFileInput(attrs={'class': 'w-full p-2 border border-gray-300 rounded-lg'}),
         }
 

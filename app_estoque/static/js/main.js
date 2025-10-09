@@ -1,16 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    const menuBtn = document.getElementById('menu-btn');
-    const sidebar = document.getElementById('sidebar');
-
-    if (menuBtn && sidebar) {
-        menuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-        });
-    }
-    
-
-    // Função auxiliar para pegar o CSRF token, necessária em vários blocos
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -27,245 +16,162 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrftoken = getCookie('csrftoken');
 
-
-    // --- BLOCO 1: LÓGICA DA PÁGINA DE RETIRADA (CARRINHO) ---
-    const retiradaContainer = document.getElementById('carrinho-container');
-    if (retiradaContainer) {
-        
-        const popup = document.getElementById('item-adicionado-popup');
-        const fecharPopupBtn = document.getElementById('fechar-popup-btn');
-        const carrinhoVazioMensagem = document.getElementById('carrinho-vazio');
-        const contadorCarrinho = document.getElementById('contador-carrinho');
-        const carrinhoTotalEl = document.getElementById('carrinho-total');
-        const carrinhoItemTemplate = document.getElementById('carrinho-item-template');
-        const botoesAdicionar = document.querySelectorAll('.btn-adicionar');
-        const limparCarrinhoBtn = document.getElementById('limpar-carrinho-btn');
-        
-
-        const itensDisponiveis = {};
-        document.querySelectorAll('.grid > div .btn-adicionar').forEach(button => {
-            const card = button.closest('.item-card');
-            const itemId = button.dataset.itemId;
-            itensDisponiveis[itemId] = {
-                nome: card.querySelector('[data-name]').textContent,
-                codigo: card.querySelector('[data-code]').textContent.replace('Código: ', ''),
-                categoria: card.querySelector('[data-category]').textContent.replace('Categoria: ', ''),
-                disponivel: parseInt(card.querySelector('[data-disponivel]').textContent),
-                valor: card.querySelector('[data-valor]').dataset.valor,
-                imagem_url: card.querySelector('img').src
-            };
+    // --- LÓGICA DO MENU HAMBURGER ---
+    const menuBtn = document.getElementById('menu-btn');
+    const sidebar = document.getElementById('sidebar');
+    if (menuBtn && sidebar) {
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
         });
-
-        function atualizarContador() {
-            const itensNoCarrinho = retiradaContainer.querySelectorAll('.carrinho-item').length;
-            contadorCarrinho.textContent = itensNoCarrinho;
-            if (itensNoCarrinho > 0 && carrinhoVazioMensagem) {
-                carrinhoVazioMensagem.classList.add('hidden');
-            } else if (carrinhoVazioMensagem) {
-                carrinhoVazioMensagem.classList.remove('hidden');
-            }
-        }
-
-        if (limparCarrinhoBtn) {
-    limparCarrinhoBtn.addEventListener('click', () => {
-        // Pega a URL do atributo data-* que adicionamos
-        const url = limparCarrinhoBtn.dataset.limparUrl;
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrftoken,
-                'Content-Type': 'application/json'
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                console.log(data.message);
-                
-                // Limpa a exibição visual do carrinho
-                // Encontra todos os itens no carrinho e os remove um por um
-                const itensNoCarrinho = retiradaContainer.querySelectorAll('.carrinho-item');
-                itensNoCarrinho.forEach(item => item.remove());
-                
-                // Atualiza o contador para 0 e mostra a mensagem de carrinho vazio
-                if (contadorCarrinho) {
-                    contadorCarrinho.textContent = '0';
-                }
-                if (carrinhoVazioMensagem) {
-                    carrinhoVazioMensagem.classList.remove('hidden');
-                }
-                atualizarTotalCarrinho();
-            }
-        });
-    });
-}
-
-        function adicionarAoCarrinho(itemId) {
-            // Previne adicionar o mesmo item mais de uma vez
-            if (retiradaContainer.querySelector(`.carrinho-item[data-item-id="${itemId}"]`)) {
-                return; 
-            }
-
-            if (carrinhoVazioMensagem) {
-                carrinhoVazioMensagem.classList.add('hidden');
-            }
-
-            const item = itensDisponiveis[itemId];
-            const novoItem = carrinhoItemTemplate.content.cloneNode(true);
-            const itemDiv = novoItem.querySelector('.carrinho-item');
-
-            if (itemDiv) itemDiv.setAttribute('data-item-id', itemId);
-            novoItem.querySelector('img').src = item.imagem_url;
-            novoItem.querySelector('img').alt = `Imagem de ${item.nome}`;
-            novoItem.querySelector('h4').textContent = item.nome;
-            novoItem.querySelector('p').textContent = `Código: ${item.codigo}`;
-            
-            retiradaContainer.prepend(novoItem);
-            atualizarContador();
-            atualizarTotalCarrinho();
-
-            if (popup) {
-                popup.classList.remove('hidden');
-                popup.classList.add('flex');
-                }
-            
-            if (fecharPopupBtn) {
-                fecharPopupBtn.addEventListener('click', () => {
-                popup.classList.add('hidden');
-                popup.classList.remove('flex');
-                });
-            
-            } 
-        }
-
-        function atualizarTotalCarrinho() {
-        let total = 0;
-        const itensNoCarrinho = retiradaContainer.querySelectorAll('.carrinho-item');
-        itensNoCarrinho.forEach(itemDiv => {
-            const itemId = itemDiv.dataset.itemId;
-            const quantidade = parseInt(itemDiv.querySelector('select').value);
-            const itemInfo = itensDisponiveis[itemId];
-            if (itemInfo && itemInfo.valor) {
-                total += quantidade * parseFloat(itemInfo.valor);
-            }
-        });
-        carrinhoTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
     }
 
-        retiradaContainer.addEventListener('click', (event) => {
-            const removerBtn = event.target.closest('.btn-remover');
-            if (removerBtn) {
-                const itemDiv = removerBtn.closest('.carrinho-item');
-                if (itemDiv) {
-                    itemDiv.remove();
-                    atualizarContador();
-                    atualizarTotalCarrinho();
-                }
+    // --- LÓGICA DA PÁGINA DE RETIRADA ---
+    const isRetiradaPage = document.querySelector('.btn-adicionar');
+    if (isRetiradaPage) {
+        
+        const itensDisponiveis = {};
+        document.querySelectorAll('.item-card').forEach(card => {
+            const button = card.querySelector('.btn-adicionar');
+            if (button) {
+                const itemId = button.dataset.itemId;
+                itensDisponiveis[itemId] = {
+                    id: itemId,
+                    nome: card.querySelector('[data-name]').textContent,
+                    codigo: card.querySelector('[data-code]').textContent.replace('Código: ', ''),
+                    valor: parseFloat(card.querySelector('[data-valor]').dataset.valor),
+                    imagem_url: card.querySelector('img').src,
+                };
             }
         });
 
-        retiradaContainer.addEventListener('change', (event) => {
-            const select = event.target.closest('select');
-            if (select) {
-                const itemDiv = select.closest('.carrinho-item');
-                if (!itemDiv) return;
-                const itemId = itemDiv.dataset.itemId;
-                const novaQuantidade = select.value;
-                const url = retiradaContainer.dataset.updateUrl;
+        let carrinho = {};
 
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                    body: JSON.stringify({ 'item_id': itemId, 'quantidade': novaQuantidade }),
-                })
-                .then(res => res.json())
-                .then(data => {
-                if (data.status === 'success') {
-                    console.log(data.message);
-                    atualizarTotalCarrinho(); // CHAMADA CORRETA E PRINCIPAL
-                }
-            });
-                
+        const ui = {
+            desktop: {
+                container: document.getElementById('carrinho-container'),
+                vazio: document.getElementById('carrinho-vazio'),
+                contador: document.getElementById('contador-carrinho'),
+                total: document.getElementById('carrinho-total'),
+                limparBtn: document.getElementById('limpar-carrinho-btn'),
+            },
+            mobile: {
+                container: document.getElementById('carrinho-container-mobile'),
+                vazio: document.getElementById('carrinho-vazio-mobile'),
+                contador: document.getElementById('contador-carrinho-mobile'),
+                total: document.getElementById('carrinho-total-mobile'),
+                limparBtn: document.getElementById('limpar-carrinho-btn-mobile'),
+            },
+            template: document.getElementById('carrinho-item-template'),
+            popup: document.getElementById('item-adicionado-popup'),
+            fecharPopupBtn: document.getElementById('fechar-popup-btn'),
+        };
+        
+        function renderizarCarrinho() {
+            const carrinhoArray = Object.values(carrinho);
+            let valorTotal = 0;
+
+            if (ui.desktop.container) ui.desktop.container.innerHTML = '';
+            if (ui.mobile.container) ui.mobile.container.innerHTML = '';
+
+            if (carrinhoArray.length === 0) {
+                if (ui.desktop.container && ui.desktop.vazio) ui.desktop.container.appendChild(ui.desktop.vazio);
+                if (ui.mobile.container && ui.mobile.vazio) ui.mobile.container.appendChild(ui.mobile.vazio);
+            } else {
+                carrinhoArray.forEach(item => {
+                    valorTotal += item.valor * item.quantidade;
+                    [ui.desktop.container, ui.mobile.container].forEach(container => {
+                        if (container) {
+                            const clone = ui.template.content.cloneNode(true);
+                            const itemDiv = clone.querySelector('.carrinho-item');
+                            itemDiv.dataset.itemId = item.id;
+                            clone.querySelector('img').src = item.imagem_url;
+                            clone.querySelector('h4').textContent = item.nome;
+                            clone.querySelector('p').textContent = `Código: ${item.codigo}`;
+                            clone.querySelector('select').value = item.quantidade;
+                            container.appendChild(clone);
+                        }
+                    });
+                });
             }
-        });
 
-        botoesAdicionar.forEach(button => {
+            const totalFormatado = `R$ ${valorTotal.toFixed(2).replace('.', ',')}`;
+            const numItens = carrinhoArray.length;
+            if (ui.desktop.contador) ui.desktop.contador.textContent = numItens;
+            if (ui.mobile.contador) ui.mobile.contador.textContent = numItens;
+            if (ui.desktop.total) ui.desktop.total.textContent = totalFormatado;
+            if (ui.mobile.total) ui.mobile.total.textContent = totalFormatado;
+        }
+
+        function atualizarSessao(url, method, body) {
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+                body: body ? JSON.stringify(body) : null,
+            })
+            .then(res => res.json())
+            .then(data => console.log(data.message))
+            .catch(err => console.error('Erro de comunicação:', err));
+        }
+
+        document.querySelectorAll('.btn-adicionar').forEach(button => {
             button.addEventListener('click', () => {
                 const itemId = button.dataset.itemId;
-                const url = `/carrinho/adicionar/${itemId}/`;
-                fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        console.log(data.message);
-                        adicionarAoCarrinho(itemId);
-                        atualizarTotalCarrinho();
-                    } else {
-                        console.error('Erro:', data.message);
-                    }
-                });
+                if (!carrinho[itemId]) {
+                    carrinho[itemId] = { ...itensDisponiveis[itemId], quantidade: 1 };
+                    renderizarCarrinho();
+                    atualizarSessao(`/carrinho/adicionar/${itemId}/`, 'POST');
+                }
+                if (ui.popup) {
+                    ui.popup.classList.remove('hidden');
+                    ui.popup.classList.add('flex');
+                }
             });
         });
-        
-        atualizarContador(); // Roda uma vez no início para esconder a mensagem se o carrinho já tiver itens
-    }
 
-    const graficoCanvas = document.getElementById('graficoGastosSemanais');
-    
-    if (graficoCanvas) {
-        // Pega os dados que o Django inseriu na página
-        const labels = JSON.parse(document.getElementById('chart-labels').textContent);
-        const data = JSON.parse(document.getElementById('chart-data').textContent);
+        if (ui.fecharPopupBtn) {
+            ui.fecharPopupBtn.addEventListener('click', () => {
+                ui.popup.classList.add('hidden');
+                ui.popup.classList.remove('flex');
+            });
+        }
 
-        new Chart(graficoCanvas, {
-            type: 'bar', // Tipo do gráfico (pode ser 'line', 'pie', etc.)
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Valor Gasto (R$)',
-                    data: data,
-                    backgroundColor: 'rgba(59, 130, 246, 0.5)', // Cor das barras
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            // Formata o eixo Y para mostrar "R$ 150,00"
-                            callback: function(value, index, values) {
-                                return 'R$ ' + value.toFixed(2).replace('.', ',');
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            // Formata a dica que aparece ao passar o mouse
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += 'R$ ' + context.parsed.y.toFixed(2).replace('.', ',');
-                                }
-                                return label;
-                            }
-                        }
-                    }
+        [ui.desktop.limparBtn, ui.mobile.limparBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const url = btn.dataset.limparUrl;
+                    carrinho = {};
+                    renderizarCarrinho();
+                    atualizarSessao(url, 'POST');
+                });
+            }
+        });
+
+        document.body.addEventListener('click', event => {
+            if (event.target.closest('.btn-remover')) {
+                const itemDiv = event.target.closest('.carrinho-item');
+                if (itemDiv) {
+                    const itemId = itemDiv.dataset.itemId;
+                    delete carrinho[itemId];
+                    renderizarCarrinho();
+                }
+            }
+        });
+
+        document.body.addEventListener('change', event => {
+            const select = event.target.closest('.carrinho-item select');
+            if (select) {
+                const itemDiv = select.closest('.carrinho-item');
+                const itemId = itemDiv.dataset.itemId;
+                const novaQuantidade = parseInt(select.value);
+                if (carrinho[itemId]) {
+                    carrinho[itemId].quantidade = novaQuantidade;
+                    renderizarCarrinho();
+                    const url = ui.desktop.container.dataset.updateUrl;
+                    atualizarSessao(url, 'POST', { 'item_id': itemId, 'quantidade': novaQuantidade });
                 }
             }
         });
     }
-
 
     // --- BLOCO 2: LÓGICA DA PÁGINA DE HISTÓRICO (MODAL DE RECUSA) ---
     const modal = document.getElementById('recusar-modal');
