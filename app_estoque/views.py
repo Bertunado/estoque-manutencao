@@ -13,6 +13,8 @@ from django.core.paginator import Paginator
 from django.db.models.functions import TruncWeek
 from datetime import timedelta
 from django.db.models import Sum, F
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 @login_required
 def retirada_itens(request):
@@ -212,7 +214,6 @@ def adicionar_item(request):
             form.save() # Salva o novo item no banco de dados
             return redirect('estoque:estoque_lista') # Redireciona para a lista de estoque
     else:
-        # Se for o primeiro acesso (GET), mostra um formulário em branco
         form = ItemForm()
     
     context = {
@@ -252,7 +253,6 @@ def confirmar_retirada(request):
         if not carrinho:
             return redirect('estoque:retirada')
 
-        # 1. Cria o registro da Retirada com status PENDENTE
         nova_retirada = Retirada.objects.create(
             usuario=request.user,
             observacao=observacao,
@@ -269,7 +269,17 @@ def confirmar_retirada(request):
                 item=item,
                 quantidade=quantidade_retirada
             )
-            # A LINHA QUE DECREMENTAVA O ESTOQUE FOI REMOVIDA DAQUI!
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "historico_geral",
+            {
+                "type": "notificar.nova.retirada",
+                "message": "Uma nova retirada foi solicitada e está pendente de aprovação."
+            }
+        )
+
+        
         
         del request.session['carrinho']
         return redirect('estoque:historico')

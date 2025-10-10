@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrftoken = getCookie('csrftoken');
 
-    // --- LÓGICA DO MENU HAMBURGER ---
+    // --- BLOCO GERAL: LÓGICA DO MENU HAMBURGER ---
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
     if (menuBtn && sidebar) {
@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- LÓGICA DA PÁGINA DE RETIRADA ---
-    const isRetiradaPage = document.querySelector('.btn-adicionar');
+    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE RETIRADA ---
+    const isRetiradaPage = document.getElementById('carrinho-container'); // Verificação mais segura
     if (isRetiradaPage) {
         
         const itensDisponiveis = {};
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(res => res.json())
             .then(data => console.log(data.message))
-            .catch(err => console.error('Erro de comunicação:', err));
+            .catch(err => console.error('Erro de comunicação com o servidor:', err));
         }
 
         document.querySelectorAll('.btn-adicionar').forEach(button => {
@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const itemDiv = select.closest('.carrinho-item');
                 const itemId = itemDiv.dataset.itemId;
                 const novaQuantidade = parseInt(select.value);
+
                 if (carrinho[itemId]) {
                     carrinho[itemId].quantidade = novaQuantidade;
                     renderizarCarrinho();
@@ -173,36 +174,70 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BLOCO 2: LÓGICA DA PÁGINA DE HISTÓRICO (MODAL DE RECUSA) ---
-    const modal = document.getElementById('recusar-modal');
-    if (modal) {
-        const modalForm = document.getElementById('recusar-form');
-        const cancelarBtn = document.getElementById('cancelar-recusa-btn');
-        const botoesRecusar = document.querySelectorAll('.btn-recusar');
-
-        botoesRecusar.forEach(button => {
-            button.addEventListener('click', () => {
-                const retiradaId = button.dataset.retiradaId;
-                modalForm.action = `/historico/recusar/${retiradaId}/`;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            });
-        });
-
-        cancelarBtn.addEventListener('click', () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        });
+    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE HISTÓRICO ---
+    const historicoContainer = document.querySelector('.space-y-6'); 
+    if (historicoContainer) {
         
-        modal.addEventListener('click', (event) => {
-            if (event.target === modal) {
+        // Lógica do Modal de Recusa
+        const modal = document.getElementById('recusar-modal');
+        if (modal) {
+            const modalForm = document.getElementById('recusar-form');
+            const cancelarBtn = document.getElementById('cancelar-recusa-btn');
+            const botoesRecusar = document.querySelectorAll('.btn-recusar');
+
+            botoesRecusar.forEach(button => {
+                button.addEventListener('click', () => {
+                    const retiradaId = button.dataset.retiradaId;
+                    modalForm.action = `/historico/recusar/${retiradaId}/`;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                });
+            });
+            cancelarBtn.addEventListener('click', () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
-            }
-        });
+            });
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+        }
+
+        // Lógica da Atualização em Tempo Real (WebSocket)
+        function setupWebSocket() {
+            const historicoSocket = new WebSocket('ws://' + window.location.host + '/ws/historico/');
+
+            historicoSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                console.log("Notificação recebida:", data.message);
+                
+                const alertBox = document.createElement('div');
+                alertBox.className = 'fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+                alertBox.textContent = 'Nova retirada solicitada! Atualizando...';
+                document.body.appendChild(alertBox);
+
+                setTimeout(() => {
+                    alertBox.remove();
+                    location.reload();
+                }, 2000);
+            };
+
+            historicoSocket.onclose = function(e) {
+                console.error('Socket do histórico fechado. Tentando reconectar em 1 segundo...');
+                setTimeout(setupWebSocket, 1000);
+            };
+
+            historicoSocket.onerror = function(err) {
+                console.error('Erro no WebSocket: ', err);
+                historicoSocket.close();
+            };
+        }
+        setupWebSocket(); // Inicia a conexão
     }
     
-    // --- BLOCO 3: LÓGICA GLOBAL (SISTEMA DE NOTIFICAÇÕES NA NAVBAR) ---
+    // --- BLOCO GLOBAL: SISTEMA DE NOTIFICAÇÕES NA NAVBAR ---
     const notificacoesBtn = document.getElementById('notificacoes-btn');
     if (notificacoesBtn) {
         const notificacoesPanel = document.getElementById('notificacoes-panel');
@@ -224,25 +259,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     clone.querySelector('.notification-date').textContent = dataFormatada;
 
                     if (notif.details) {
-                    const detailsContainer = clone.querySelector('.notification-details');
-                    const itemList = clone.querySelector('.notification-item-list');
-                    const reasonContainer = clone.querySelector('.notification-reason');
-                    const reasonText = clone.querySelector('.notification-reason-text');
+                        const detailsContainer = clone.querySelector('.notification-details');
+                        const itemList = clone.querySelector('.notification-item-list');
+                        const reasonContainer = clone.querySelector('.notification-reason');
+                        const reasonText = clone.querySelector('.notification-reason-text');
 
-                    // Adiciona os itens à lista
-                    notif.details.itens.forEach(itemText => {
-                        const li = document.createElement('li');
-                        li.textContent = itemText;
-                        itemList.appendChild(li);
-                    });
-
-                    // Adiciona o motivo
-                    reasonText.textContent = notif.details.motivo;
-                    
-                    // Mostra as seções de detalhes e motivo
-                    detailsContainer.classList.remove('hidden');
-                    reasonContainer.classList.remove('hidden');
-                }
+                        notif.details.itens.forEach(itemText => {
+                            const li = document.createElement('li');
+                            li.textContent = itemText;
+                            itemList.appendChild(li);
+                        });
+                        reasonText.textContent = notif.details.motivo;
+                        
+                        detailsContainer.classList.remove('hidden');
+                        reasonContainer.classList.remove('hidden');
+                    }
                     
                     notificacoesLista.appendChild(clone);
                 });
