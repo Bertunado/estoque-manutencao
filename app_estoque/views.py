@@ -3,18 +3,16 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import JsonResponse
 from .models import Item, Retirada, ItemRetirado, Notificacao
-from .forms import ItemForm
-from django.contrib.auth.forms import UserCreationForm
+from .forms import ItemForm, CustomUserCreationForm
 from django.contrib.auth import login
 import json
-from django.db.models import Q
-from .forms import ItemForm, CustomUserCreationForm
+from django.db.models import Q, Sum, F, Value, DecimalField
 from django.core.paginator import Paginator
-from django.db.models.functions import TruncWeek
+from django.db.models.functions import TruncWeek, Coalesce
 from datetime import timedelta
-from django.db.models import Sum, F
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.utils.dateparse import parse_datetime
 
 @login_required
 def retirada_itens(request):
@@ -110,7 +108,11 @@ def dashboard_view(request):
     ).annotate(
         week=TruncWeek('data_retirada')
     ).values('week').annotate(
-        total_gasto=Sum(F('itens_retirados__quantidade') * F('itens_retirados__item__valor'))
+        total_gasto=Coalesce(
+            Sum(F('itens_retirados__quantidade') * F('itens_retirados__item__valor')),
+            Value(0),
+            output_field=DecimalField()
+        )
     ).order_by('week')
 
     # Formata os dados para o Chart.js
@@ -123,6 +125,24 @@ def dashboard_view(request):
     }
     
     return render(request, 'dashboard.html', context)
+
+@login_required
+def verificar_novas_retiradas(request):
+    # Pega o horário da última verificação, enviado pelo JavaScript
+    ultimo_timestamp_str = request.GET.get('since', None)
+    
+    if not ultimo_timestamp_str:
+        return JsonResponse({'novas_retiradas': False})
+
+    ultimo_timestamp = parse_datetime(ultimo_timestamp_str)
+
+    # Verifica se existe alguma retirada PENDENTE criada DEPOIS da última verificação
+    ha_novas_retiradas = Retirada.objects.filter(
+        status='PENDENTE',
+        data_retirada__gt=ultimo_timestamp
+    ).exists()
+    
+    return JsonResponse({'novas_retiradas': ha_novas_retiradas})
 
 @login_required
 def atualizar_quantidade_carrinho(request):

@@ -26,4 +26,5 @@ urlpatterns = [
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('carrinho/limpar/', views.limpar_carrinho, name='limpar_carrinho'),
     path('carrinho/', views.carrinho_view, name='carrinho'),
+    path('historico/verificar-novas/', views.verificar_novas_retiradas, name='verificar_novas'),
 ]

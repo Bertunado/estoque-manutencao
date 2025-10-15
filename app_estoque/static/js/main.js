@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE HISTÓRICO ---
-    const historicoContainer = document.querySelector('.space-y-6'); 
+    const historicoContainer = document.querySelector('.space-y-6');
     if (historicoContainer) {
         
         // Lógica do Modal de Recusa
@@ -206,45 +206,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Lógica da Atualização em Tempo Real (WebSocket)
-        function setupWebSocket() {
-            const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const agoraEmFormatoISO = new Date().toISOString();
 
-            const historicoSocket = new WebSocket(
-                socketProtocol 
-                + '//' 
-                + window.location.host 
-                + '/ws/historico/'
-            );
+    // A cada 7 segundos, pergunta ao servidor se há algo novo
+    setInterval(() => {
+        fetch(`/historico/verificar-novas/?since=${agoraEmFormatoISO}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.novas_retiradas) {
+                    console.log("Novas retiradas encontradas! Recarregando...");
+                    
+                    // Mostra um alerta amigável e recarrega
+                    const alertBox = document.createElement('div');
+                    alertBox.className = 'fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+                    alertBox.textContent = 'Nova retirada solicitada! Atualizando...';
+                    document.body.appendChild(alertBox);
 
-            historicoSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                console.log("Notificação recebida:", data.message);
-                
-                const alertBox = document.createElement('div');
-                alertBox.className = 'fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
-                alertBox.textContent = 'Nova retirada solicitada! Atualizando...';
-                document.body.appendChild(alertBox);
-
-                setTimeout(() => {
-                    alertBox.remove();
-                    location.reload();
-                }, 2000);
-            };
-
-            historicoSocket.onclose = function(e) {
-                console.error('Socket do histórico fechado. Tentando reconectar em 1 segundo...');
-                setTimeout(function() {
-                    setupWebSocket();
-                }, 1000);
-            };
-
-            historicoSocket.onerror = function(err) {
-                console.error('Erro no WebSocket: ', err);
-                historicoSocket.close();
-            };
-        }
-        setupWebSocket(); // Inicia a conexão
-    }
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    console.log("Nenhuma nova retirada.");
+                }
+            });
+    }, 7000); // 7000 milissegundos = 7 segundos
+}
+    
     
     // --- BLOCO GLOBAL: SISTEMA DE NOTIFICAÇÕES NA NAVBAR ---
     const notificacoesBtn = document.getElementById('notificacoes-btn');
