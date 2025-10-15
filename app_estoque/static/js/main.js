@@ -207,7 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Lógica da Atualização em Tempo Real (WebSocket)
         function setupWebSocket() {
-            const historicoSocket = new WebSocket('ws://' + window.location.host + '/ws/historico/');
+            const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+            const historicoSocket = new WebSocket(
+                socketProtocol 
+                + '//' 
+                + window.location.host 
+                + '/ws/historico/'
+            );
 
             historicoSocket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
@@ -226,7 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             historicoSocket.onclose = function(e) {
                 console.error('Socket do histórico fechado. Tentando reconectar em 1 segundo...');
-                setTimeout(setupWebSocket, 1000);
+                setTimeout(function() {
+                    setupWebSocket();
+                }, 1000);
             };
 
             historicoSocket.onerror = function(err) {
