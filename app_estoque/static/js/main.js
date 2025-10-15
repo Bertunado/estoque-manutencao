@@ -25,6 +25,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function setupWebSocketGlobal() {
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/notificacoes/');
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log("Notificação em tempo real recebida:", data.message);
+
+            // Mostra um alerta amigável na tela
+            const alertBox = document.createElement('div');
+            alertBox.className = 'fixed top-5 right-5 bg-blue-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
+            alertBox.textContent = data.message;
+            document.body.appendChild(alertBox);
+
+            // Faz o alerta sumir e a bolinha da notificação aparecer
+            setTimeout(() => {
+                alertBox.remove();
+                // Simula um recarregamento parcial para a bolinha de notificação aparecer
+                // (uma solução mais avançada poderia atualizar o contador via JS)
+                location.reload(); 
+            }, 4000); // 4 segundos
+        };
+
+        socket.onclose = function(e) {
+            console.error('Socket de notificação fechado. Tentando reconectar...');
+            setTimeout(setupWebSocketGlobal, 2000); // Tenta reconectar a cada 2 segundos
+        };
+    }
+    setupWebSocketGlobal();
+
     // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE RETIRADA ---
     const isRetiradaPage = document.getElementById('carrinho-container'); // Verificação mais segura
     if (isRetiradaPage) {

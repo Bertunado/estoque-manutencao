@@ -247,7 +247,6 @@ def recusar_retirada(request, retirada_id):
     if request.method == 'POST':
         retirada = get_object_or_404(Retirada, id=retirada_id)
         
-        
         motivo = request.POST.get('motivo_recusa', 'Motivo não especificado.')
 
         retirada.status = 'RECUSADA'
@@ -260,6 +259,15 @@ def recusar_retirada(request, retirada_id):
             usuario=retirada.usuario,
             retirada_associada=retirada,
             mensagem=mensagem_notificacao
+        )
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'user_{retirada.usuario.id}', # Envia para o grupo específico do usuário
+            {
+                "type": "send.notification",
+                "message": mensagem_notificacao
+            }
         )
 
     return redirect('estoque:historico')
@@ -330,6 +338,15 @@ def aprovar_retirada(request, retirada_id):
             usuario=retirada.usuario, # O usuário original da retirada
             retirada_associada=retirada,
             mensagem=mensagem_notificacao
+        )
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f'user_{retirada.usuario.id}', # Envia para o grupo específico do usuário
+            {
+                "type": "send.notification",
+                "message": mensagem_notificacao
+            }
         )
 
     return redirect('estoque:historico')
