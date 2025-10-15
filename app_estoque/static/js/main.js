@@ -25,46 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function setupWebSocketGlobal() {
-    // 1. Verifica se a página está em HTTPS e escolhe o protocolo correto
-    const socketProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    
-    // 2. Usa a variável para construir a URL correta
-    const socket = new WebSocket(
-        socketProtocol 
-        + '//' 
-        + window.location.host 
-        + '/ws/notificacoes/'
-    );
-
-    socket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        console.log("Notificação em tempo real recebida:", data.message);
-
-        // Mostra um alerta amigável na tela
-        const alertBox = document.createElement('div');
-        alertBox.className = 'fixed top-5 right-5 bg-blue-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
-        alertBox.textContent = data.message;
-        document.body.appendChild(alertBox);
-
-        // Faz o alerta sumir e a bolinha da notificação aparecer
-        setTimeout(() => {
-            alertBox.remove();
-            location.reload(); 
-        }, 4000); // 4 segundos
-    };
-
-    socket.onclose = function(e) {
-        console.error('Socket de notificação fechado. Tentando reconectar...');
-        setTimeout(setupWebSocketGlobal, 2000); // Tenta reconectar a cada 2 segundos
-    };
-
-    socket.onerror = function(err) {
-        console.error('Erro no WebSocket: ', err);
-        socket.close();
-    };
-}
-    setupWebSocketGlobal();
 
     // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE RETIRADA ---
     const isRetiradaPage = document.getElementById('carrinho-container'); // Verificação mais segura
@@ -272,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }, 7000); // 7000 milissegundos = 7 segundos
 }
+
+
     
     
     // --- BLOCO GLOBAL: SISTEMA DE NOTIFICAÇÕES NA NAVBAR ---
