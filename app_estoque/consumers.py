@@ -7,7 +7,7 @@ class NotificacaoConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # A conexão só é aceita se o usuário estiver logado
         if self.scope["user"].is_authenticated:
-            # Cria um nome de grupo único para cada usuário (ex: 'user_1', 'user_2')
+            # Cria um nome de grupo único para cada usuário
             self.group_name = f'user_{self.scope["user"].id}'
 
             # Entra no grupo/canal privado
@@ -26,7 +26,7 @@ class NotificacaoConsumer(AsyncWebsocketConsumer):
                 self.channel_name
             )
 
-    # Esta função será chamada pelas nossas views para enviar uma notificação
+    # Esta função será chamada pela view para enviar uma notificação
     async def send_notification(self, event):
         message = event['message']
         # Envia a mensagem para o WebSocket (navegador do usuário)

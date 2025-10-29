@@ -9,8 +9,8 @@ class Item(models.Model):
     capacidade_maxima = models.PositiveIntegerField(default=100, help_text="Quantidade que representa 100% do estoque.")
     localizacao = models.CharField(max_length=100, blank=True, help_text="Ex: Corredor A, Prateleira 3")
     valor = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
+        max_digits=10,
+        decimal_places=2,
         default=0.00,
         help_text="Valor monetário da peça (ex: 150.75)"
     )
@@ -18,7 +18,7 @@ class Item(models.Model):
 
     def __str__(self):
         return f"{self.nome} ({self.codigo})"
-    
+
     @property
     def percentual_disponivel(self):
         if self.capacidade_maxima == 0:
@@ -33,7 +33,7 @@ class Retirada(models.Model):
     STATUS_CHOICES = [
         ('PENDENTE', 'Pendente'),
         ('APROVADA', 'Aprovada'),
-        ('RECUSADA', 'Recusada'), # Adicionamos um status extra para o futuro
+        ('RECUSADA', 'Recusada'),
     ]
 
     """ Representa um único evento de retirada de múltiplos itens. """
@@ -48,11 +48,11 @@ class Retirada(models.Model):
 
     class Meta:
         ordering = ['-data_retirada'] # Ordena as retiradas da mais nova para a mais antiga
-    
+
     @property
-    def valor_total(self): 
+    def valor_total(self):
         return sum(
-            item_retirado.quantidade * item_retirado.item.valor 
+            item_retirado.quantidade * item_retirado.item.valor
             for item_retirado in self.itens_retirados.all()
         )
 
@@ -64,7 +64,7 @@ class ItemRetirado(models.Model):
 
     def __str__(self):
         return f"{self.quantidade}x {self.item.nome} na {self.retirada}"
-    
+
 class Notificacao(models.Model):
     """ Representa uma notificação para um usuário. """
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificacoes')
@@ -79,4 +79,3 @@ class Notificacao(models.Model):
     class Meta:
         ordering = ['-data_criacao'] # Mostra as mais novas primeiro
 
-    

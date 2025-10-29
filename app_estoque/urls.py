@@ -2,16 +2,15 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 
-# Dê um nome para o conjunto de URLs da sua aplicação
 app_name = 'estoque'
 
 urlpatterns = [
-    path('', views.estoque_view, name='estoque_lista'), 
+    path('', views.estoque_view, name='estoque_lista'),
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('cadastro/', views.cadastro_view, name='cadastro'),
     path('retirada/', views.retirada_itens, name='retirada'),
-    
+
     # NOVA URL: Endpoint para adicionar um item ao carrinho
     path('carrinho/adicionar/<int:item_id>/', views.adicionar_ao_carrinho, name='adicionar_ao_carrinho'),
     path('estoque/', views.estoque_view, name='estoque_lista'),
@@ -27,5 +26,5 @@ urlpatterns = [
     path('carrinho/limpar/', views.limpar_carrinho, name='limpar_carrinho'),
     path('carrinho/', views.carrinho_view, name='carrinho'),
     path('historico/verificar-novas/', views.verificar_novas_retiradas, name='verificar_novas'),
-    
+
 ]

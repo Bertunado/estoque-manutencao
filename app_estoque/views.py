@@ -17,7 +17,7 @@ from django.utils.dateparse import parse_datetime
 @login_required
 def retirada_itens(request):
     query = request.GET.get('q')
-    
+
     # Começa com a regra base: apenas itens com estoque > 0
     base_itens = Item.objects.filter(disponivel__gt=0)
 
@@ -29,12 +29,12 @@ def retirada_itens(request):
     else:
         # Se não houver busca, usa a lista completa de itens disponíveis
         item_list = base_itens.order_by('nome')
-    
+
     # LÓGICA DE PAGINAÇÃO
     paginator = Paginator(item_list, 12)# Define 9 itens por página
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj  # Envia o page_obj para o template
     }
@@ -43,40 +43,40 @@ def retirada_itens(request):
 @login_required
 def estoque_view(request):
     query = request.GET.get('q')
-    
+
     if query:
         item_list = Item.objects.filter(
             Q(nome__icontains=query) | Q(codigo__icontains=query)
         ).order_by('nome')
     else:
-        item_list = Item.objects.all().order_by('nome') 
-    
-    paginator = Paginator(item_list, 12) 
+        item_list = Item.objects.all().order_by('nome')
+
+    paginator = Paginator(item_list, 12)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
-        'page_obj': page_obj 
+        'page_obj': page_obj
     }
-    
+
     return render(request, 'estoque.html', context)
 
 @login_required
 def carrinho_view(request):
     carrinho_session = request.session.get('carrinho', {})
-    
+
     itens_no_carrinho = []
     valor_total_carrinho = 0
-    
+
     # Busca os objetos 'Item' completos com base nos IDs do carrinho
     item_ids = carrinho_session.keys()
     itens_db = Item.objects.filter(id__in=item_ids)
-    
+
     for item in itens_db:
         item_id_str = str(item.id)
         quantidade = carrinho_session[item_id_str]['quantidade']
         valor_item_total = item.valor * quantidade
-        
+
         itens_no_carrinho.append({
             'item': item,
             'quantidade': quantidade,
@@ -101,7 +101,7 @@ def limpar_carrinho(request):
 def dashboard_view(request):
     # Pega as retiradas APROVADAS dos últimos 3 meses
     tres_meses_atras = timezone.now() - timedelta(days=90)
-    
+
     gastos_semanais = Retirada.objects.filter(
         status='APROVADA',
         data_retirada__gte=tres_meses_atras
@@ -123,14 +123,14 @@ def dashboard_view(request):
         'chart_labels': chart_labels,
         'chart_data': chart_data,
     }
-    
+
     return render(request, 'dashboard.html', context)
 
 @login_required
 def verificar_novas_retiradas(request):
     # Pega o horário da última verificação, enviado pelo JavaScript
     ultimo_timestamp_str = request.GET.get('since', None)
-    
+
     if not ultimo_timestamp_str:
         return JsonResponse({'novas_retiradas': False})
 
@@ -141,7 +141,7 @@ def verificar_novas_retiradas(request):
         status='PENDENTE',
         data_retirada__gt=ultimo_timestamp
     ).exists()
-    
+
     return JsonResponse({'novas_retiradas': ha_novas_retiradas})
 
 @login_required
@@ -172,17 +172,17 @@ def editar_item(request, item_id):
         if form.is_valid():
             # Pega a quantidade a ser adicionada do nosso novo campo
             quantidade_a_adicionar = form.cleaned_data.get('adicionar_quantidade', 0)
-            
+
             # Salva as outras alterações (nome, código, etc.) mas NÃO envia para o banco ainda
             item_atualizado = form.save(commit=False)
 
             # Se o usuário digitou um valor para adicionar, faz a soma
             if quantidade_a_adicionar and quantidade_a_adicionar > 0:
                 item_atualizado.disponivel += quantidade_a_adicionar
-            
+
             # Agora sim, salva o objeto completo no banco de dados
             item_atualizado.save()
-            
+
             return redirect('estoque:estoque_lista')
     else:
         form = ItemForm(instance=item)
@@ -199,7 +199,7 @@ def adicionar_ao_carrinho(request, item_id):
     if request.method == 'POST':
         # Pega o carrinho da sessão ou cria um dicionário vazio
         carrinho = request.session.get('carrinho', {})
-        
+
         item = get_object_or_404(Item, id=item_id)
         item_id_str = str(item_id) # Chaves de dicionário devem ser strings
 
@@ -210,18 +210,18 @@ def adicionar_ao_carrinho(request, item_id):
                 'codigo': item.codigo,
                 'quantidade': 1 # Começa com 1
             }
-        
+
         # Salva o carrinho de volta na sessão
         request.session['carrinho'] = carrinho
-        
+
         # Retorna uma resposta de sucesso com os dados do carrinho atualizado
         return JsonResponse({
-            'status': 'success', 
+            'status': 'success',
             'message': f'"{item.nome}" adicionado com sucesso!',
             'carrinho': carrinho,
             'total_itens': len(carrinho)
         })
-    
+
     return JsonResponse({'status': 'error', 'message': 'Requisição inválida.'})
 
 @login_required
@@ -235,7 +235,7 @@ def adicionar_item(request):
             return redirect('estoque:estoque_lista') # Redireciona para a lista de estoque
     else:
         form = ItemForm()
-    
+
     context = {
         'form': form
     }
@@ -246,13 +246,13 @@ def adicionar_item(request):
 def recusar_retirada(request, retirada_id):
     if request.method == 'POST':
         retirada = get_object_or_404(Retirada, id=retirada_id)
-        
+
         motivo = request.POST.get('motivo_recusa', 'Motivo não especificado.')
 
         retirada.status = 'RECUSADA'
         retirada.motivo_recusa = motivo
         retirada.save()
-        
+
         mensagem_notificacao = "Sua solicitação de retirada foi recusada."
 
         Notificacao.objects.create(
@@ -287,7 +287,6 @@ def confirmar_retirada(request):
             status='PENDENTE' # Status inicial
         )
 
-        # 2. Loop para salvar cada item retirado (SEM ALTERAR O ESTOQUE)
         for item_id, dados in carrinho.items():
             item = get_object_or_404(Item, id=item_id)
             quantidade_retirada = dados['quantidade']
@@ -297,7 +296,7 @@ def confirmar_retirada(request):
                 item=item,
                 quantidade=quantidade_retirada
             )
-        
+
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "historico_geral",
@@ -307,11 +306,11 @@ def confirmar_retirada(request):
             }
         )
 
-        
-        
+
+
         del request.session['carrinho']
         return redirect('estoque:historico')
-    
+
     return redirect('estoque:retirada')
 
 @login_required
@@ -319,8 +318,8 @@ def confirmar_retirada(request):
 def aprovar_retirada(request, retirada_id):
     if request.method == 'POST':
         retirada = get_object_or_404(Retirada, id=retirada_id)
-        
-        # 1. Atualiza o estoque para cada item na retirada
+
+        # Atualiza o estoque para cada item na retirada
         for item_retirado in retirada.itens_retirados.all():
             item = item_retirado.item
             item.disponivel -= item_retirado.quantidade
@@ -361,16 +360,15 @@ def marcar_notificacoes_como_lidas(request):
 @login_required
 def historico_view(request):
     query = request.GET.get('q')
-    
+
     is_supervisor = request.user.groups.filter(name='Supervisores').exists()
-    
+
     if is_supervisor:
         base_historico = Retirada.objects.all()
     else:
         base_historico = Retirada.objects.filter(usuario=request.user)
 
     if query:
-        # LÓGICA DE BUSCA COMPLETA (substituindo o '...')
         retirada_list = base_historico.filter(
             Q(usuario__username__icontains=query) |
             Q(usuario__first_name__icontains=query) |
@@ -379,11 +377,10 @@ def historico_view(request):
     else:
         retirada_list = base_historico
 
-    # LÓGICA DE OTIMIZAÇÃO COMPLETA (substituindo o '...')
     retirada_list = retirada_list.select_related('usuario').prefetch_related('itens_retirados__item').order_by('-data_retirada')
-    
+
     # Lógica de paginação
-    paginator = Paginator(retirada_list, 5) 
+    paginator = Paginator(retirada_list, 5)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -402,7 +399,7 @@ def cadastro_view(request):
             return redirect('estoque:estoque_lista') # Redireciona para a página de estoque
     else:
         form = CustomUserCreationForm()
-    
+
     context = {
         'form': form
     }

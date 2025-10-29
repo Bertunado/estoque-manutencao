@@ -4,7 +4,6 @@ from django.core.serializers import serialize
 
 def unread_notifications(request):
     if request.user.is_authenticated:
-        # Usamos select_related para otimizar a busca, pegando a retirada associada na mesma consulta
         notifications_qs = Notificacao.objects.filter(
             usuario=request.user, lida=False
         ).select_related('retirada_associada')
@@ -17,19 +16,19 @@ def unread_notifications(request):
                 'details': None  # Começa sem detalhes
             }
 
-            # Se a notificação for de uma retirada recusada, adicionamos os detalhes
+            # Se a notificação for de uma retirada recusada, adiciona os detalhes
             if notif.retirada_associada and notif.retirada_associada.status == 'RECUSADA':
                 items_list = []
                 for item_retirado in notif.retirada_associada.itens_retirados.all():
                     items_list.append(
                         f"{item_retirado.quantidade}x {item_retirado.item.nome} ({item_retirado.item.codigo})"
                     )
-                
+
                 data['details'] = {
                     'itens': items_list,
                     'motivo': notif.retirada_associada.motivo_recusa
                 }
-            
+
             notifications_data.append(data)
 
         return {

@@ -1,5 +1,4 @@
 from django.contrib import admin
-from .models import Item
 from .models import Item, Retirada, ItemRetirado
 
 admin.site.register(Item)

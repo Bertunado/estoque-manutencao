@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-qiaw$l%0dqe9kfp!jddzhhp2(-zxdhv)^!2fifn)ca$c)#mm_r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['vianab.pythonanywhere.com']
 
 
 # Application definition
@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Diz ao Django onde juntar todos os arquivos estáticos
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ROOT_URLCONF = 'urls'
