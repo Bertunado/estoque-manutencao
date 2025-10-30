@@ -46,10 +46,12 @@ A plataforma "Estoque Manutenção" centraliza o inventário, formaliza o fluxo 
   * JavaScript (ES6+) (para interatividade do carrinho, modals e chamadas de API)
 
   * Chart.js (para a renderização dos gráficos no dashboard)
+    
 
 *  **Banco de Dados:**
 
   * SQLite3 (para desenvolvimento e produção simplificada)
+    
 
 *  **Deployment:**
 
