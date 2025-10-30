@@ -1,8 +1,10 @@
 **Estoque Manutenção**
+
 Sistema de controle de estoque e solicitações de materiais desenvolvido em Django e Tailwind CSS, focado no setor de manutenção. 
 Este projeto digitaliza o processo de solicitação de peças, implementando um fluxo de trabalho com aprovação gerencial, controle de inventário em tempo real e relatórios de gastos.
 
 **Contexto do Projeto**
+
 Este sistema foi desenvolvido para resolver a necessidade de um controle de inventário digitalizado para o setor de manutenção. 
 O processo anterior, manual, dificultava a rastreabilidade de peças, gerava contagens de estoque imprecisas e não oferecia uma visão clara dos custos de material.
 A plataforma "Estoque Manutenção" centraliza o inventário, formaliza o fluxo de solicitações através de um sistema de aprovação e fornece dados em tempo real para a gestão.
@@ -34,7 +36,7 @@ Django 5.2 (para toda a lógica de backend, views e ORM)
 
 Django Channels (para a infraestrutura de tempo real)
 
-Frontend:
+**Frontend:**
 
 HTML5
 
@@ -44,11 +46,13 @@ JavaScript (ES6+) (para interatividade do carrinho, modals e chamadas de API)
 
 Chart.js (para a renderização dos gráficos no dashboard)
 
-Banco de Dados:
+
+**Banco de Dados:**
 
 SQLite3 (para desenvolvimento e produção simplificada)
 
-Deployment:
+
+**Deployment:**
 
 PythonAnywhere (Hospagem)
 
