@@ -9,52 +9,51 @@ Este sistema foi desenvolvido para resolver a necessidade de um controle de inve
 O processo anterior, manual, dificultava a rastreabilidade de peças, gerava contagens de estoque imprecisas e não oferecia uma visão clara dos custos de material.
 A plataforma "Estoque Manutenção" centraliza o inventário, formaliza o fluxo de solicitações através de um sistema de aprovação e fornece dados em tempo real para a gestão.
 
-**Funcionalidades Principais**
+* **Funcionalidades Principais**
 
-Controle de Acesso por Nível: O sistema diferencia usuários Normais (que podem solicitar itens) de Supervisores (que gerenciam o estoque e aprovam solicitações).
+  * Controle de Acesso por Nível: O sistema diferencia usuários Normais (que podem solicitar itens) de Supervisores (que gerenciam o estoque e aprovam solicitações).
 
-Gestão de Inventário (CRUD): Supervisores podem criar, editar e visualizar todos os itens do estoque, incluindo nome, código, categoria, valor, localização e imagem.
+  * Gestão de Inventário (CRUD): Supervisores podem criar, editar e visualizar todos os itens do estoque, incluindo nome, código, categoria, valor, localização e imagem.
 
-Fluxo de Retirada com Carrinho: Usuários podem navegar pelo estoque, adicionar múltiplos itens a um carrinho, ajustar quantidades e submeter uma solicitação formal de retirada.
+  * Fluxo de Retirada com Carrinho: Usuários podem navegar pelo estoque, adicionar múltiplos itens a um carrinho, ajustar quantidades e submeter uma solicitação formal de retirada.
 
-Sistema de Aprovação: As solicitações ficam com status "Pendente" até que um supervisor as aprove (debitando o estoque) ou recuse (informando um motivo).
+  * Sistema de Aprovação: As solicitações ficam com status "Pendente" até que um supervisor as aprove (debitando o estoque) ou recuse (informando um motivo).
 
-Página de Histórico: Um registro completo de todas as retiradas, com visualizações diferentes para usuários (veem apenas seus pedidos) e supervisores (veem todos os pedidos).
+  * Página de Histórico: Um registro completo de todas as retiradas, com visualizações diferentes para usuários (veem apenas seus pedidos) e supervisores (veem todos os pedidos).
 
-Dashboard Gerencial: Uma página de análise visual para supervisores com um gráfico de barras dos gastos totais por semana.
+  * Dashboard Gerencial: Uma página de análise visual para supervisores com um gráfico de barras dos gastos totais por semana.
 
-Notificações em Tempo Real (AJAX Polling): A página de histórico do supervisor se atualiza automaticamente quando novas solicitações chegam, e o usuário é notificado em tempo real quando seu pedido é aprovado/recusado.
+  * Notificações em Tempo Real (AJAX Polling): A página de histórico do supervisor se atualiza automaticamente quando novas solicitações chegam, e o usuário é notificado em tempo real quando seu pedido é aprovado/recusado.
 
-Design Responsivo: A interface é 100% funcional e otimizada para uso em dispositivos móveis, incluindo um menu "hamburger" e um carrinho "sanfona".
+  * Design Responsivo: A interface é 100% funcional e otimizada para uso em dispositivos móveis, incluindo um menu "hamburger" e um carrinho "sanfona".
 
-**Tecnologias Utilizadas**
-Backend:
+*  **Tecnologias Utilizadas**
+  
+  * Backend:
 
-Python 3.13
+  * Python 3.13
 
-Django 5.2 (para toda a lógica de backend, views e ORM)
+  * Django 5.2 (para toda a lógica de backend, views e ORM)
 
-Django Channels (para a infraestrutura de tempo real)
+  * Django Channels (para a infraestrutura de tempo real)
 
-**Frontend:**
+* **Frontend:**
 
-HTML5
+  * HTML5
 
-Tailwind CSS 3 (para todo o design e layout responsivo)
+  * Tailwind CSS 3 (para todo o design e layout responsivo)
 
-JavaScript (ES6+) (para interatividade do carrinho, modals e chamadas de API)
+  * JavaScript (ES6+) (para interatividade do carrinho, modals e chamadas de API)
 
-Chart.js (para a renderização dos gráficos no dashboard)
+  * Chart.js (para a renderização dos gráficos no dashboard)
 
+*  **Banco de Dados:**
 
-**Banco de Dados:**
+  * SQLite3 (para desenvolvimento e produção simplificada)
 
-SQLite3 (para desenvolvimento e produção simplificada)
+*  **Deployment:**
 
+  * PythonAnywhere (Hospagem)
 
-**Deployment:**
-
-PythonAnywhere (Hospagem)
-
-Gunicorn / Daphne (Servidor de aplicação ASGI/WSGI)
+  * Gunicorn / Daphne (Servidor de aplicação ASGI/WSGI)
 
