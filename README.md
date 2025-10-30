@@ -27,7 +27,7 @@ A plataforma "Estoque Manutenção" centraliza o inventário, formaliza o fluxo 
 
   * Design Responsivo: A interface é 100% funcional e otimizada para uso em dispositivos móveis, incluindo um menu "hamburger" e um carrinho "sanfona".
 
-*  **Tecnologias Utilizadas**
+* **Tecnologias Utilizadas**
   
   * Backend:
 
@@ -48,12 +48,12 @@ A plataforma "Estoque Manutenção" centraliza o inventário, formaliza o fluxo 
   * Chart.js (para a renderização dos gráficos no dashboard)
     
 
-*  **Banco de Dados:**
+* **Banco de Dados:**
 
   * SQLite3 (para desenvolvimento e produção simplificada)
     
 
-*  **Deployment:**
+* **Deployment:**
 
   * PythonAnywhere (Hospagem)
 
