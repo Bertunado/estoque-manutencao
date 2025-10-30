@@ -59,16 +59,20 @@ Gunicorn / Daphne (Servidor de aplicação ASGI/WSGI)
 Para rodar este projeto no seu computador, siga os passos abaixo.
 
 1. Pré-requisitos
+   
     Python 3.10+
 
     Node.js e npm (necessários para o Tailwind CSS)
 
-2. Clonar o Repositório
+3. Clonar o Repositório
+   
 Bash
 
 git clone https://github.com/seu-usuario/seu-repositorio.git
 cd seu-repositorio
+
 3. Configurar o Ambiente Python
+   
 Bash
 
 python -m venv venv
