@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrftoken = getCookie('csrftoken');
 
-    // --- BLOCO GERAL: LÓGICA DO MENU HAMBURGER ---
+    // LÓGICA DO MENU HAMBURGER 
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
     if (menuBtn && sidebar) {
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE RETIRADA ---
+    // LÓGICA DA PÁGINA DE RETIRADA
     const isRetiradaPage = document.getElementById('carrinho-container'); // Verificação mais segura
     if (isRetiradaPage) {
         
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE HISTÓRICO ---
+    // LÓGICA DA PÁGINA DE HISTÓRICO
     const historicoContainer = document.querySelector('.space-y-6');
     if (historicoContainer) {
         
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
     
-    // --- BLOCO GLOBAL: SISTEMA DE NOTIFICAÇÕES NA NAVBAR ---
+    // SISTEMA DE NOTIFICAÇÕES NA NAVBAR
     const notificacoesBtn = document.getElementById('notificacoes-btn');
     if (notificacoesBtn) {
         const notificacoesPanel = document.getElementById('notificacoes-panel');
