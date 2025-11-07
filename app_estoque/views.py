@@ -18,7 +18,6 @@ from django.utils.dateparse import parse_datetime
 def retirada_itens(request):
     query = request.GET.get('q')
 
-    # Começa com a regra base: apenas itens com estoque > 0
     base_itens = Item.objects.filter(disponivel__gt=0)
 
     if query:
@@ -27,7 +26,6 @@ def retirada_itens(request):
             Q(nome__icontains=query) | Q(codigo__icontains=query)
         ).order_by('nome')
     else:
-        # Se não houver busca, usa a lista completa de itens disponíveis
         item_list = base_itens.order_by('nome')
 
     # LÓGICA DE PAGINAÇÃO
@@ -170,7 +168,6 @@ def editar_item(request, item_id):
     if request.method == 'POST':
         form = ItemForm(request.POST, request.FILES, instance=item)
         if form.is_valid():
-            # Pega a quantidade a ser adicionada do nosso novo campo
             quantidade_a_adicionar = form.cleaned_data.get('adicionar_quantidade', 0)
 
             # Salva as outras alterações (nome, código, etc.) mas NÃO envia para o banco ainda
@@ -180,7 +177,7 @@ def editar_item(request, item_id):
             if quantidade_a_adicionar and quantidade_a_adicionar > 0:
                 item_atualizado.disponivel += quantidade_a_adicionar
 
-            # Agora sim, salva o objeto completo no banco de dados
+            # Agora salva o objeto completo no banco de dados
             item_atualizado.save()
 
             return redirect('estoque:estoque_lista')
@@ -193,17 +190,14 @@ def editar_item(request, item_id):
     }
     return render(request, 'editar_item.html', context)
 
-# NOVA VIEW: Lógica para adicionar item ao carrinho na sessão
 def adicionar_ao_carrinho(request, item_id):
-    # Garante que a requisição seja do tipo POST por segurança
     if request.method == 'POST':
         # Pega o carrinho da sessão ou cria um dicionário vazio
         carrinho = request.session.get('carrinho', {})
 
         item = get_object_or_404(Item, id=item_id)
-        item_id_str = str(item_id) # Chaves de dicionário devem ser strings
+        item_id_str = str(item_id)
 
-        # Por enquanto, vamos adicionar apenas 1 unidade de cada item
         if item_id_str not in carrinho:
             carrinho[item_id_str] = {
                 'nome': item.nome,
