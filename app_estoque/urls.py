@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.urls import path
+from . import views
 
 app_name = 'estoque'
 
@@ -10,8 +12,6 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('cadastro/', views.cadastro_view, name='cadastro'),
     path('retirada/', views.retirada_itens, name='retirada'),
-
-    # NOVA URL: Endpoint para adicionar um item ao carrinho
     path('carrinho/adicionar/<int:item_id>/', views.adicionar_ao_carrinho, name='adicionar_ao_carrinho'),
     path('estoque/', views.estoque_view, name='estoque_lista'),
     path('estoque/adicionar/', views.adicionar_item, name='adicionar_item'),
@@ -26,5 +26,11 @@ urlpatterns = [
     path('carrinho/limpar/', views.limpar_carrinho, name='limpar_carrinho'),
     path('carrinho/', views.carrinho_view, name='carrinho'),
     path('historico/verificar-novas/', views.verificar_novas_retiradas, name='verificar_novas'),
+    path('gerar_pdf/<int:retirada_id>/', views.gerar_pdf_retirada, name='gerar_pdf_retirada'),
+    path('exportar_csv/', views.exportar_csv_retiradas, name='exportar_csv_retiradas'),
+    path('perfil/', views.perfil_view, name='perfil'),
+    path("retirada/<int:id>/pdf/", views.visualizar_pdf, name="visualizar_pdf")
 
-]
+
+
+    ]
