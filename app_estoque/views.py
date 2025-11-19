@@ -13,6 +13,70 @@ from datetime import timedelta
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.utils.dateparse import parse_datetime
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.http import HttpResponse, Http404
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib import colors
+import csv
+from io import BytesIO
+from django.utils.encoding import smart_str
+from datetime import datetime
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+from babel.numbers import format_currency
+from .models import Retirada 
+from django.shortcuts import render, redirect
+from .forms import PerfilForm
+from django.contrib import messages
+
+
+@login_required
+def perfil_view(request):
+    """
+    Página para o usuário editar seu perfil .
+    """
+    user = request.user
+
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil atualizado com sucesso.")
+            return redirect('estoque:perfil')  # ou mesma página após salvar
+        else:
+            messages.error(request, "Por favor corrija os erros no formulário.")
+    else:
+        form = PerfilForm(instance=user)
+
+    context = {
+        'form': form
+    }
+    return render(request, 'perfil.html', context)
+
+@login_required
+def configuracoes_perfil(request):
+    user = request.user
+
+    if request.method == 'POST':
+        form = PerfilForm(request.POST, instance=user)
+
+        if form.is_valid():
+            form.save()
+
+            if user.groups.filter(name='Supervisores').exists():
+                messages.success(request, "Perfil atualizado. Como supervisor, seu email será usado para notificações automáticas.")
+            else:
+                messages.warning(request, "Perfil atualizado. Porém, apenas supervisores recebem notificações automáticas.")
+            
+            return redirect('estoque:configuracoes')
+
+    else:
+        form = PerfilForm(instance=user)
+
+    return render(request, "configuracoes.html", {'form': form})
+
+
 
 @login_required
 def retirada_itens(request):
@@ -37,6 +101,54 @@ def retirada_itens(request):
         'page_obj': page_obj  # Envia o page_obj para o template
     }
     return render(request, 'retirada_itens.html', context)
+
+@login_required
+def exportar_csv_retiradas(request):
+    """Permite que o supervisor exporte todas as retiradas filtradas em CSV."""
+
+    user = request.user
+    q = request.GET.get("q", "").strip()
+
+    # Filtragem de acordo com o tipo de usuário
+    if user.is_superuser or getattr(user, "is_supervisor", False):
+        retiradas = Retirada.objects.all()
+    else:
+        retiradas = Retirada.objects.filter(usuario=user)
+
+    # Filtro de busca (por nome ou RE)
+    if q:
+        retiradas = retiradas.filter(
+            Q(usuario__username__icontains=q) |
+            Q(usuario__first_name__icontains=q) |
+            Q(usuario__last_name__icontains=q)
+        )
+
+    # Criação da resposta CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="historico_retiradas.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Usuário", "Data da Retirada", "Status", 
+        "Itens Retirados", "Valor Total (R$)", "Observação"
+    ])
+
+    for retirada in retiradas:
+        itens = ", ".join([
+            f"{item.quantidade}x {item.item.nome} ({item.item.codigo})"
+            for item in retirada.itens_retirados.all()
+        ])
+
+        writer.writerow([
+            retirada.usuario.get_full_name() or retirada.usuario.username,
+            retirada.data_retirada.strftime("%d/%m/%Y %H:%M"),
+            retirada.status,
+            itens,
+            f"{retirada.valor_total:.2f}",
+            retirada.observacao or ""
+        ])
+
+    return response
 
 @login_required
 def estoque_view(request):
@@ -398,3 +510,132 @@ def cadastro_view(request):
         'form': form
     }
     return render(request, 'cadastro.html', context)
+
+
+
+def is_supervisor(user):
+    """Verifica se o usuário pertence ao grupo Supervisores"""
+    return user.groups.filter(name='Supervisores').exists()
+
+@user_passes_test(is_supervisor)
+def gerar_pdf_retirada(request, retirada_id):
+    retirada = Retirada.objects.get(id=retirada_id)
+
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # --- Cores e estilos base ---
+    vermelho = colors.HexColor("#d61c1c")
+    cinza_claro = colors.HexColor("#f5f5f5")
+    preto = colors.HexColor("#333333")
+
+    # --- Cabeçalho ---
+    p.setFont("Helvetica-Bold", 18)
+    p.setFillColor(vermelho)
+    p.drawString(40, height - 60, "Comprovante")
+
+    p.setFillColor(preto)
+    p.setFont("Helvetica-Bold", 14)
+    p.drawCentredString(width / 2, height - 90, "Comprovante de Retirada")
+
+    p.setFont("Helvetica", 10)
+    p.setFillColor(colors.gray)
+    data_emissao = datetime.now().strftime("%d/%m/%Y • %H:%M:%S")
+    p.drawCentredString(width / 2, height - 105, f"Emitido em {data_emissao}")
+
+    # Linha separadora
+    p.setStrokeColor(colors.lightgrey)
+    p.line(40, height - 115, width - 40, height - 115)
+
+    y = height - 150
+
+    # --- Dados principais ---
+    def secao(titulo, valor):
+        nonlocal y
+        p.setFont("Helvetica-Bold", 10)
+        p.setFillColor(vermelho)
+        p.drawString(40, y, titulo)
+        y -= 12
+        p.setFont("Helvetica", 10)
+        p.setFillColor(preto)
+        p.drawString(40, y, valor)
+        y -= 20
+
+    secao("Nome do Solicitante", retirada.usuario.get_full_name() or retirada.usuario.username)
+    secao("Data da Retirada", retirada.data_retirada.strftime("%d/%m/%Y • %H:%M"))
+    secao("Status", retirada.status)
+
+    if retirada.observacao:
+        secao("Observação", retirada.observacao)
+
+    # --- Itens da retirada ---
+    y -= 5
+    p.setFont("Helvetica-Bold", 10)
+    p.setFillColor(vermelho)
+    p.drawString(40, y, "Itens Retirados:")
+    y -= 15
+
+    data = [["Qtd", "Item", "Código", "Valor Unitário (R$)", "Subtotal (R$)"]]
+
+    for item in retirada.itens_retirados.all():
+        valor_unitario = item.item.valor or 0
+        subtotal = item.quantidade * valor_unitario
+
+        data.append([
+            str(item.quantidade),
+            item.item.nome,
+            item.item.codigo,
+            format_currency(valor_unitario, 'BRL', locale='pt_BR'),
+            format_currency(subtotal, 'BRL', locale='pt_BR')
+        ])
+
+    # --- Tabela ---
+    tabela = Table(data, colWidths=[40, 160, 70, 100, 90])
+    tabela.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), vermelho),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.gray),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+    ]))
+
+    w, h = tabela.wrapOn(p, width - 80, y)
+    tabela.drawOn(p, 40, y - h)
+    y -= h + 20
+
+    # --- Valor total ---
+    p.setFont("Helvetica-Bold", 11)
+    p.setFillColor(preto)
+    p.drawRightString(width - 40, y, f"Valor Total: R$ {retirada.valor_total:.2f}")
+
+    # --- Rodapé ---
+    y -= 40
+    p.setStrokeColor(colors.lightgrey)
+    p.line(40, y, width - 40, y)
+    y -= 15
+    p.setFont("Helvetica", 9)
+    p.setFillColor(colors.gray)
+    p.drawCentredString(width / 2, y, "Documento gerado automaticamente pelo Sistema de Controle de Estoque")
+
+    # Finaliza o PDF
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+
+    filename = f"comprovante_retirada_{retirada.id}.pdf"
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+@login_required
+def visualizar_pdf(request, id):
+    retirada = get_object_or_404(Retirada, id=id)
+
+    if retirada.status == "recusada":
+        return HttpResponseForbidden("PDF indisponível — retirada recusada")
+
+    return FileResponse(open(retirada.arquivo_pdf.path, "rb"), content_type="application/pdf")
