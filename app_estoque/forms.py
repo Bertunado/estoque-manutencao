@@ -1,10 +1,7 @@
-# app_estoque/forms.py
-
 from django import forms
 from .models import Item
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-
 
 class ItemForm(forms.ModelForm):
     adicionar_quantidade = forms.IntegerField(
@@ -32,8 +29,24 @@ class ItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['disponivel'].widget.attrs['readonly'] = True
-        self.fields['disponivel'].widget.attrs['class'] = 'w-full p-2 border bg-gray-100 text-gray-500 rounded-lg'
+
+        # Se o item já existe (tem pk/id), bloqueia o campo 'disponivel' (modo edição)
+        if self.instance.pk:
+            self.fields['disponivel'].widget.attrs['readonly'] = True
+            self.fields['disponivel'].widget.attrs['class'] += ' bg-gray-100 text-gray-500 cursor-not-allowed'
+        else:
+            if 'readonly' in self.fields['disponivel'].widget.attrs:
+                del self.fields['disponivel'].widget.attrs['readonly']
+            self.fields['adicionar_quantidade'].widget = forms.HiddenInput()
+
+        # Percorre todos os campos e força required=True, exceto no 'adicionar_quantidade'
+        for field_name, field in self.fields.items():
+            if field_name != 'adicionar_quantidade':
+                field.required = True
+
+                label_atual = field.label or field_name.replace('_', ' ').capitalize()
+                if not label_atual.endswith('*'):
+                    field.label = f"{label_atual} *"
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=30, required=True, help_text='Obrigatório.')
@@ -56,7 +69,6 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields['password1'].widget.attrs.update({'class': default_field_classes, 'placeholder': 'Digite sua senha'})
         self.fields['password2'].widget.attrs.update({'class': default_field_classes, 'placeholder': 'Confirme sua senha'})
 
-        # Customiza os nomes e remove os textos de ajuda
         self.fields['username'].label = "RE (Registro de empregado)"
         self.fields['username'].help_text = None
         self.fields['password1'].label = "Senha"
@@ -71,3 +83,18 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+class PerfilForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'block w-full rounded-md border-gray-200 shadow-sm py-2 px-3'}),
+            'last_name': forms.TextInput(attrs={'class': 'block w-full rounded-md border-gray-200 shadow-sm py-2 px-3'}),
+            'email': forms.EmailInput(attrs={'class': 'block w-full rounded-md border-gray-200 shadow-sm py-2 px-3'}),
+        }
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'email': 'Email',
+        }

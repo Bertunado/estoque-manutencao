@@ -11,9 +11,9 @@ BASE_DIR = Path(__file__).resolve().parent
 SECRET_KEY = 'django-insecure-qiaw$l%0dqe9kfp!jddzhhp2(-zxdhv)^!2fifn)ca$c)#mm_r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['vianab.pythonanywhere.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'vianab.pythonanywhere.com']
 
 
 # Application definition
@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app_estoque',
+    'app_estoque.apps.AppEstoqueConfig',
+
     'channels',
 ]
 
@@ -124,8 +125,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_REDIRECT_URL = '/retirada/'  # Para onde ir após o login (página inicial/estoque)
-LOGOUT_REDIRECT_URL = '/login/' # Para onde ir após o logout
+LOGIN_REDIRECT_URL = '/retirada/'  #
+LOGOUT_REDIRECT_URL = '/login/'
 LOGIN_URL = '/login/'
 
 CHANNEL_LAYERS = {
@@ -133,3 +134,15 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+
+
+# SENDGRID CONFIG
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_USE_TLS = False
+EMAIL_HOST_USER = 'bernardoviana2005@gmail.com'
+EMAIL_HOST_PASSWORD = 'aedk kkvz hewz jdiy'
+DEFAULT_FROM_EMAIL = 'Estoque <bernardoviana2005@gmail.com>'

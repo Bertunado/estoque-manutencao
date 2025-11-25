@@ -11,6 +11,22 @@
     {% endif %}
     <p class="text-gray-500 mt-1 mb-8">Visualize as movimentações de estoque.</p>
 
+    {% if is_supervisor %}
+<div class="mb-6 flex justify-end">
+    <a href="{% url 'estoque:exportar_csv_retiradas' %}?{% if request.GET.q %}q={{ request.GET.q }}{% endif %}"
+       class="flex flex-row items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition shadow-sm">
+        
+        <!-- Ícone -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        
+        <!-- Texto -->
+        <span class="whitespace-nowrap">Exportar CSV</span>
+    </a>
+</div>
+{% endif %}
+
     <form method="GET" action="{% url 'estoque:historico' %}">
         <div class="relative mb-6">
             <span class="absolute inset-y-0 left-0 flex items-center pl-3">
@@ -54,22 +70,39 @@
             <div class="bg-gray-50 p-4 rounded-lg">
                 <p class="font-semibold text-sm text-gray-700 mb-2">Itens retirados:</p>
                 <ul class="list-disc list-inside space-y-1 text-sm text-gray-600">
-                {% for item_retirado in retirada.itens_retirados.all %}
-                <li>
-                    {{ item_retirado.quantidade }}x {{ item_retirado.item.nome }}
-                    <span class="text-gray-400">({{ item_retirado.item.codigo }})</span>
-                </li>
-                {% endfor %}
+                    {% for item_retirado in retirada.itens_retirados.all %}
+                    <li>
+                        {{ item_retirado.quantidade }}x {{ item_retirado.item.nome }}
+                        <span class="text-gray-400">({{ item_retirado.item.codigo }})</span>
+                    </li>
+                    {% endfor %}
                 </ul>
-
+            
                 <div class="mt-4 pt-4 border-t border-gray-100 text-right">
-        <p class="text-sm text-gray-800">
-            Valor Total: 
-            <span class="font-bold text-lg">R$ {{ retirada.valor_total|floatformat:2 }}</span>
-        </p>
-        
-    </div>
+                    <p class="text-sm text-gray-800">
+                        Valor Total: 
+                        <span class="font-bold text-lg">R$ {{ retirada.valor_total|floatformat:2 }}</span>
+                    </p>
+                </div>
+            
+                <div class="mt-4 text-right">
+                    {% if retirada.status != "RECUSADA" %}
+                        <a href="{% url 'estoque:gerar_pdf_retirada' retirada.id %}"
+                           class="inline-block bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                            Gerar PDF
+                        </a>
+                    {% else %}
+                        <span class="text-red-600 font-semibold">
+                            PDF indisponível — retirada recusada
+                        </span>
+                    {% endif %}
+                </div>
+                
+
+            
+
             </div>
+            
     
     {% if retirada.observacao %}
     <p class="font-semibold text-sm text-gray-700 mt-4 mb-2">Observação:</p>

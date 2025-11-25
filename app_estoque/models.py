@@ -78,4 +78,3 @@ class Notificacao(models.Model):
 
     class Meta:
         ordering = ['-data_criacao'] # Mostra as mais novas primeiro
-

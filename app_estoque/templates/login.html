@@ -5,54 +5,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Estoque Manutenção</title>
-    <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="{% static 'images/icone.jpg' %}">
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen py-10">
 
     <div class="text-center max-w-md w-full px-4 sm:px-0">
         <header class="mb-8">
-            <img src="{% static 'images/icone.jpg' %}" alt="Ícone de Caixa" class="mx-auto h-16 w-auto mb-4">
+            <!-- Fallback se a imagem não existir -->
+            <img src="{% static 'images/icone.jpg' %}" alt="Logo" class="mx-auto h-16 w-auto mb-4 rounded-lg" onerror="this.style.display='none'">
             <h1 class="text-4xl font-bold text-gray-800">Estoque Manutenção</h1>
         </header>
 
         <main class="bg-white p-8 rounded-xl shadow-md">
             <h2 class="text-2xl font-semibold text-gray-700">Acesso ao Sistema</h2>
-            <p class="text-gray-500 text-sm mt-2 mb-6">Escolha um método de autenticação</p>
-
-            <div class="bg-gray-100 p-1 rounded-lg flex mb-6">
-                <button class="flex-1 py-2 text-sm font-semibold bg-white text-blue-600 rounded-md shadow-sm">Tradicional</button>
-                <button class="flex-1 py-2 text-sm text-gray-500">FaceID</button>
-                <button class="flex-1 py-2 text-sm text-gray-500">RFID</button>
-            </div>
+            <p class="text-gray-500 text-sm mt-2 mb-6">Entre com suas credenciais</p>
 
             <form method="post">
                 {% csrf_token %}
                 <div class="space-y-4 text-left">
                     <div>
-                        <label for="id_username" class="block text-sm font-medium text-gray-600 mb-1">Registro de empregado (RE)</label>
-                        <input type="text" name="username" id="id_username" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Digite seu RE">
+                        <label for="id_username" class="block text-sm font-medium text-gray-600 mb-1">Registro (RE)</label>
+                        <input type="text" name="username" id="id_username" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Digite seu RE" required>
                     </div>
                     <div>
                         <label for="id_password" class="block text-sm font-medium text-gray-600 mb-1">Senha</label>
-                        <input type="password" name="password" id="id_password" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Digite sua senha">
+                        <input type="password" name="password" id="id_password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Digite sua senha" required>
                     </div>
                 </div>
                 
                 {% if form.errors %}
-                <p class="text-red-500 text-sm mt-4">Seu RE ou senha estão incorretos. Tente novamente.</p>
+                <div class="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+                    <p>Usuário ou senha incorretos.</p>
+                </div>
                 {% endif %}
 
-                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">Entrar</button>
+                <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Entrar</button>
                 
                 <div class="text-center mt-4">
                     <a href="#" class="text-sm text-blue-600 hover:underline">Não lembra sua senha?</a>
                 </div>
             </form>
         </main>
+        
         <footer class="mt-6 text-center text-gray-500 text-sm">
             <p>Não tem uma conta? <a href="{% url 'estoque:cadastro' %}" class="text-blue-600 font-semibold hover:underline">Cadastre-se</a></p>
         </footer>
     </div>
-
 </body>
 </html>

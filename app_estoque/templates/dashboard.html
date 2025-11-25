@@ -1,19 +1,236 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="flex-1 p-8">
-    <h1 class="text-3xl font-bold text-gray-800">Dashboard de Análises</h1>
-    <p class="text-gray-500 mt-1 mb-8">Visão geral dos dados de movimentação do estoque.</p>
+<main class="flex-1 p-8 bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Dashboard de Custos</h1>
+            <p class="text-gray-500 mt-1">Visão geral dos gastos por movimentação de estoque aprovada.</p>
+        </header>
 
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Gastos por Semana (Últimos 3 Meses)</h2>
-        <div>
-            <canvas id="graficoGastosSemanais"></canvas>
+        <!-- Container do Gráfico Principal (Anual) -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Gastos Mensais - {{ ano_atual }}</h2>
+                    <p class="text-sm text-gray-400">Clique em uma barra para ver o detalhamento semanal</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                    <span class="text-sm text-gray-600">Total Consumido</span>
+                </div>
+            </div>
+            
+            <div class="relative h-96 w-full">
+                <canvas id="graficoAnual"></canvas>
+            </div>
+        </div>
+
+        <!-- Container do Gráfico Secundário (Semanal - Oculto inicialmente) -->
+        <div id="containerSemanal" class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hidden transition-all duration-500 ease-in-out opacity-0 translate-y-4">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800" id="tituloSemanal">Detalhamento</h2>
+                    <p class="text-sm text-gray-500" id="subtituloSemanal">Gastos por semana</p>
+                </div>
+                <button onclick="fecharDetalhes()" class="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
+                    Fechar Detalhes ✕
+                </button>
+            </div>
+            <div class="relative h-80 w-full">
+                <canvas id="graficoSemanal"></canvas>
+            </div>
         </div>
     </div>
 </main>
 
-{{ chart_labels|json_script:"chart-labels" }}
-{{ chart_data|json_script:"chart-data" }}
+<!-- Carregando bibliotecas do Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
+<!-- DADOS DO DJANGO (Isso resolve o erro de sintaxe no editor) -->
+<!-- O 'safe' é usado pois a view já mandou os dados como string JSON via json.dumps -->
+<script id="meses-labels-data" type="application/json">{{ meses_labels|safe }}</script>
+<script id="meses-data-data" type="application/json">{{ meses_data|safe }}</script>
+<script id="semanas-detalhes-data" type="application/json">{{ semanas_detalhes|safe }}</script>
+
+<script>
+    // 1. Lendo os dados dos scripts JSON acima
+    // Isso evita misturar sintaxe Django com JS, que é o que causava o erro
+    const mesesLabels = JSON.parse(document.getElementById('meses-labels-data').textContent);
+    const mesesData = JSON.parse(document.getElementById('meses-data-data').textContent);
+    const semanasDetalhes = JSON.parse(document.getElementById('semanas-detalhes-data').textContent);
+
+    // Registra o plugin para exibir números nas barras
+    Chart.register(ChartDataLabels);
+
+    // --- Configurações Visuais Comuns ---
+    const formatMoney = (value) => {
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            datalabels: {
+                color: '#374151', // Cinza escuro para contraste
+                anchor: 'end',
+                align: 'top',
+                offset: 0,
+                font: { weight: 'bold', size: 11 },
+                formatter: (value) => {
+                    // Só mostra valor se for maior que 0 para não poluir o gráfico
+                    return value > 0 ? value.toLocaleString('pt-BR', {minimumFractionDigits: 0, maximumFractionDigits: 0}) : '';
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return formatMoney(context.raw);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                border: { dash: [4, 4] }, // Linha pontilhada no eixo zero
+                grid: {
+                    color: '#f3f4f6', // Linhas de grade cinza claro
+                    tickLength: 10    // Tamanho do risco lateral (1000, 2000 etc)
+                },
+                ticks: {
+                    color: '#9ca3af',
+                    font: { size: 11 },
+                    padding: 10,
+                    callback: function(value) {
+                        // Formatação simplificada no eixo Y (ex: 1.000, 2.000)
+                        return value.toLocaleString('pt-BR');
+                    }
+                }
+            },
+            x: {
+                grid: { display: false }, // Remove grade vertical para limpar visual
+                ticks: {
+                    color: '#4b5563',
+                    font: { weight: '500' }
+                }
+            }
+        },
+        layout: {
+            padding: { top: 30 } // Espaço extra no topo para os labels não cortarem
+        }
+    };
+
+    // --- 2. Renderizar Gráfico Anual ---
+    const ctxAnual = document.getElementById('graficoAnual').getContext('2d');
+    let activeChartSemanal = null; // Variável para controlar o gráfico secundário
+
+    const chartAnual = new Chart(ctxAnual, {
+        type: 'bar',
+        data: {
+            labels: mesesLabels,
+            datasets: [{
+                label: 'Total Gasto',
+                data: mesesData,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)', // Azul
+                hoverBackgroundColor: 'rgba(37, 99, 235, 1)', // Azul escuro ao passar mouse
+                borderRadius: 6, // Barras arredondadas
+                barPercentage: 0.6 // Largura da barra
+            }]
+        },
+        options: {
+            ...commonOptions,
+            onClick: (e) => {
+                const points = chartAnual.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+                
+                if (points.length) {
+                    const index = points[0].index;
+                    const mesNome = chartAnual.data.labels[index];
+                    abrirGraficoSemanal(index, mesNome);
+                }
+            }
+        }
+    });
+
+    // --- 3. Lógica do Gráfico Semanal (Drill-down) ---
+    function abrirGraficoSemanal(mesIndex, mesNome) {
+        const dados = semanasDetalhes[mesIndex];
+        const container = document.getElementById('containerSemanal');
+
+        // Validação: Se não tiver dados naquele mês
+        // Se dados for undefined, ou array vazio, ou array cheio de zeros
+        if (!dados || dados.data.length === 0 || dados.data.every(v => v === 0)) {
+            // Efeito visual de erro sutil: pisca a barra em vermelho
+            const originalColor = chartAnual.data.datasets[0].backgroundColor;
+            
+            // Cria um array de cores onde só a barra clicada fica vermelha
+            const newColors = chartAnual.data.labels.map((_, i) => 
+                i === mesIndex ? '#ef4444' : 'rgba(59, 130, 246, 0.8)'
+            );
+            
+            chartAnual.data.datasets[0].backgroundColor = newColors;
+            chartAnual.update();
+
+            // Volta ao azul depois de 0.5s
+            setTimeout(() => {
+                chartAnual.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.8)';
+                chartAnual.update();
+            }, 500);
+            return;
+        }
+
+        // Atualiza Títulos
+        document.getElementById('tituloSemanal').innerText = `Detalhamento de ${mesNome}`;
+        
+        // Mostra Container com animação
+        container.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('opacity-0', 'translate-y-4');
+        }, 10);
+
+        // Destrói gráfico anterior se existir para não sobrepor
+        if (activeChartSemanal) {
+            activeChartSemanal.destroy();
+        }
+
+        // Renderiza Novo Gráfico
+        const ctxSemanal = document.getElementById('graficoSemanal').getContext('2d');
+        activeChartSemanal = new Chart(ctxSemanal, {
+            type: 'bar', // Pode mudar para 'line' se quiser ver a tendência dos dias na semana
+            data: {
+                labels: dados.labels,
+                datasets: [{
+                    label: 'Gasto Semanal',
+                    data: dados.data,
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)', // Verde
+                    borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                ...commonOptions, // Reutiliza o estilo (R$ acima da barra, etc)
+                animation: {
+                    duration: 500,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // Rola a página suavemente até o gráfico novo
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function fecharDetalhes() {
+        const container = document.getElementById('containerSemanal');
+        container.classList.add('opacity-0', 'translate-y-4');
+        setTimeout(() => {
+            container.classList.add('hidden');
+        }, 500);
+    }
+</script>
 {% endblock %}

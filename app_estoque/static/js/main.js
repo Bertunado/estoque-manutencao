@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const csrftoken = getCookie('csrftoken');
 
-    // --- BLOCO GERAL: LÓGICA DO MENU HAMBURGER ---
     const menuBtn = document.getElementById('menu-btn');
     const sidebar = document.getElementById('sidebar');
     if (menuBtn && sidebar) {
@@ -25,11 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE RETIRADA ---
+    // LÓGICA DA PÁGINA DE RETIRADA
     const isRetiradaPage = document.getElementById('carrinho-container'); // Verificação mais segura
     if (isRetiradaPage) {
-        
+
         const itensDisponiveis = {};
         document.querySelectorAll('.item-card').forEach(card => {
             const button = card.querySelector('.btn-adicionar');
@@ -66,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             popup: document.getElementById('item-adicionado-popup'),
             fecharPopupBtn: document.getElementById('fechar-popup-btn'),
         };
-        
+
         function renderizarCarrinho() {
             const carrinhoArray = Object.values(carrinho);
             let valorTotal = 0;
@@ -175,10 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- BLOCO ESPECÍFICO: LÓGICA DA PÁGINA DE HISTÓRICO ---
+    // LÓGICA DA PÁGINA DE HISTÓRICO
     const historicoContainer = document.querySelector('.space-y-6');
     if (historicoContainer) {
-        
+
         // Lógica do Modal de Recusa
         const modal = document.getElementById('recusar-modal');
         if (modal) {
@@ -189,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             botoesRecusar.forEach(button => {
                 button.addEventListener('click', () => {
                     const retiradaId = button.dataset.retiradaId;
-                    modalForm.action = `/historico/recusar/${retiradaId}/`;
+                    modalForm.action = `/retirada/${retiradaId}/recusar/`; // URL ajustada para o padrão do Django
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
                 });
@@ -206,37 +204,32 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Lógica da Atualização em Tempo Real (WebSocket)
+        // ATUALIZAÇÃO EM TEMPO REAL
+        // Substitui o WebSocket problemático por uma checagem a cada 7 segundos
         const agoraEmFormatoISO = new Date().toISOString();
 
-    // A cada 7 segundos, pergunta ao servidor se há algo novo
-    setInterval(() => {
-        fetch(`/historico/verificar-novas/?since=${agoraEmFormatoISO}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.novas_retiradas) {
-                    console.log("Novas retiradas encontradas! Recarregando...");
-                    
-                    // Mostra um alerta amigável e recarrega
-                    const alertBox = document.createElement('div');
-                    alertBox.className = 'fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50';
-                    alertBox.textContent = 'Nova retirada solicitada! Atualizando...';
-                    document.body.appendChild(alertBox);
+        setInterval(() => {
+            fetch(`/notificacoes/verificar/?since=${agoraEmFormatoISO}`) // URL corrigida para o seu urls.py
+                .then(response => response.json())
+                .then(data => {
+                    if (data.novas_retiradas) {
+                        console.log("Novas retiradas encontradas! Recarregando...");
 
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                } else {
-                    console.log("Nenhuma nova retirada.");
-                }
-            });
-    }, 7000); // 7000 milissegundos = 7 segundos
-}
+                        const alertBox = document.createElement('div');
+                        alertBox.className = 'fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg z-50 transition-opacity duration-500';
+                        alertBox.textContent = 'Nova retirada solicitada! Atualizando...';
+                        document.body.appendChild(alertBox);
 
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
+                })
+                .catch(err => console.log("Erro no polling:", err));
+        }, 7000);
+    }
 
-    
-    
-    // --- BLOCO GLOBAL: SISTEMA DE NOTIFICAÇÕES NA NAVBAR ---
+    // SISTEMA DE NOTIFICAÇÕES NA NAVBAR
     const notificacoesBtn = document.getElementById('notificacoes-btn');
     if (notificacoesBtn) {
         const notificacoesPanel = document.getElementById('notificacoes-panel');
@@ -245,12 +238,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const notificacaoTemplate = document.getElementById('notificacao-template');
         const urlMarcarLido = notificacoesBtn.dataset.urlMarcarLido;
         const csrfTokenNotificacao = notificacoesBtn.dataset.csrfToken;
-        let unreadNotifications = JSON.parse(document.getElementById('unread-notifications-data').textContent);
+
+        const unreadDataElement = document.getElementById('unread-notifications-data');
+        let unreadNotifications = unreadDataElement ? JSON.parse(unreadDataElement.textContent) : [];
 
         notificacoesBtn.addEventListener('click', () => {
             notificacoesPanel.classList.toggle('hidden');
             if (!notificacoesPanel.classList.contains('hidden') && unreadNotifications.length > 0) {
-                notificacoesLista.innerHTML = ''; 
+                notificacoesLista.innerHTML = '';
                 unreadNotifications.forEach(notif => {
                     const clone = notificacaoTemplate.content.cloneNode(true);
                     clone.querySelector('.notification-message').textContent = notif.mensagem;
@@ -269,11 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             itemList.appendChild(li);
                         });
                         reasonText.textContent = notif.details.motivo;
-                        
+
                         detailsContainer.classList.remove('hidden');
                         reasonContainer.classList.remove('hidden');
                     }
-                    
+
                     notificacoesLista.appendChild(clone);
                 });
 
@@ -289,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     if (data.status === 'success') {
                         console.log('Notificações marcadas como lidas.');
-                        unreadNotifications.length = 0;
+                        unreadNotifications.length = 0; // Limpa o array local
                     }
                 });
             }
