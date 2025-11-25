@@ -12,7 +12,6 @@
 
     <div class="text-center max-w-md w-full px-4 sm:px-0">
         <header class="mb-8">
-            <!-- Fallback se a imagem não existir -->
             <img src="{% static 'images/icone.jpg' %}" alt="Logo" class="mx-auto h-16 w-auto mb-4 rounded-lg" onerror="this.style.display='none'">
             <h1 class="text-4xl font-bold text-gray-800">Estoque Manutenção</h1>
         </header>
@@ -33,7 +32,7 @@
                         <input type="password" name="password" id="id_password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Digite sua senha" required>
                     </div>
                 </div>
-                
+
                 {% if form.errors %}
                 <div class="mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
                     <p>Usuário ou senha incorretos.</p>
@@ -41,13 +40,13 @@
                 {% endif %}
 
                 <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Entrar</button>
-                
+
                 <div class="text-center mt-4">
                     <a href="#" class="text-sm text-blue-600 hover:underline">Não lembra sua senha?</a>
                 </div>
             </form>
         </main>
-        
+
         <footer class="mt-6 text-center text-gray-500 text-sm">
             <p>Não tem uma conta? <a href="{% url 'estoque:cadastro' %}" class="text-blue-600 font-semibold hover:underline">Cadastre-se</a></p>
         </footer>

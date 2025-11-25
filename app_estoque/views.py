@@ -79,9 +79,14 @@ def excluir_item(request, item_id):
     item = get_object_or_404(Item, id=item_id)
     if request.method == 'POST':
         nome_item = item.nome
-        item.delete()
-        messages.success(request, f"Item '{nome_item}' excluído com sucesso.")
+
+        # Em vez de delete(), apenas marcamos como inativo
+        item.ativo = False
+        item.save()
+
+        messages.success(request, f"Item '{nome_item}' enviado para a lixeira (histórico preservado).")
         return redirect('estoque:estoque_lista')
+
     return redirect('estoque:estoque_lista')
 
 @login_required
@@ -135,23 +140,17 @@ def configuracoes_perfil(request):
 def retirada_itens(request):
     query = request.GET.get('q')
 
-    base_itens = Item.objects.filter(disponivel__gt=0)
+    base_itens = Item.objects.filter(ativo=True, disponivel__gt=0)
 
     if query:
-        item_list = base_itens.filter(
-            Q(nome__icontains=query) | Q(codigo__icontains=query)
-        ).order_by('nome')
+        item_list = base_itens.filter(Q(nome__icontains=query) | Q(codigo__icontains=query)).order_by('nome')
     else:
         item_list = base_itens.order_by('nome')
 
-    # LÓGICA DE PAGINAÇÃO
-    paginator = Paginator(item_list, 12)# Define 9 itens por página
+    paginator = Paginator(item_list, 12)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj
-    }
+    context = {'page_obj': page_obj}
     return render(request, 'retirada_itens.html', context)
 
 @login_required
@@ -223,21 +222,17 @@ def exportar_csv_retiradas(request):
 def estoque_view(request):
     query = request.GET.get('q')
 
+    base_qs = Item.objects.filter(ativo=True)
+
     if query:
-        item_list = Item.objects.filter(
-            Q(nome__icontains=query) | Q(codigo__icontains=query)
-        ).order_by('nome')
+        item_list = base_qs.filter(Q(nome__icontains=query) | Q(codigo__icontains=query)).order_by('nome')
     else:
-        item_list = Item.objects.all().order_by('nome')
+        item_list = base_qs.order_by('nome')
 
     paginator = Paginator(item_list, 12)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj
-    }
-
+    context = {'page_obj': page_obj}
     return render(request, 'estoque.html', context)
 
 @login_required

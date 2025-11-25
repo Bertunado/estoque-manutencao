@@ -7,6 +7,7 @@ class Item(models.Model):
     categoria = models.CharField(max_length=50)
     disponivel = models.PositiveIntegerField(default=0)
     capacidade_maxima = models.PositiveIntegerField(default=100, help_text="Quantidade que representa 100% do estoque.")
+    ativo = models.BooleanField(default=True)
     localizacao = models.CharField(max_length=100, blank=True, help_text="Ex: Corredor A, Prateleira 3")
     valor = models.DecimalField(
         max_digits=10,
